@@ -1,9 +1,11 @@
-const Footer =()=>{
+const Footer = () => {
   return (
-    <div className="footer bg-zinc-800 text-white px-8 py-4">
-      <h1 className="text-2xl font-semibold text-center">&copy; 2025, Made with Love By Manoj kumar </h1>
-    </div>
-  )
-}
+    <footer className="bg-zinc-800 text-zinc-300 text-center py-4">
+      <p>
+        © {new Date().getFullYear()}, Made with ❤️ by <span className="font-semibold">Manoj Kumar</span>
+      </p>
+    </footer>
+  );
+};
 
 export default Footer;

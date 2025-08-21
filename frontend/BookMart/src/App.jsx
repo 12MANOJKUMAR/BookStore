@@ -9,9 +9,10 @@ import Cart from './pages/Cart'
 import Profile from './pages/Profile'
 const App = ()=>{
   return (
-    <div className="">
+    <div className="flex flex-col min-h-screen bg-zinc-900">
       <Router>
       <Navbar/>
+      <main className="flex-1">
         <Routes>
         <Route exact path= "/"  element ={<Home/>} /> 
         <Route  path= "/login"  element ={<Login/>} /> 
@@ -20,6 +21,7 @@ const App = ()=>{
         <Route  path= "/cart"  element ={<Cart/>} /> 
         <Route  path= "/profile"  element ={<Profile/>} /> 
       </Routes>
+      </main>
       <Footer/>
       </Router>
     </div>
