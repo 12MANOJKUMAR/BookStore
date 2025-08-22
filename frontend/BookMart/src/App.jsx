@@ -7,6 +7,9 @@ import SignUp from './pages/SignUp'
 import AllBooks from './pages/AllBooks'
 import Cart from './pages/Cart'
 import Profile from './pages/Profile'
+import ViewBookDetails from './components/ViewBookDetails/ViewBookDetails'
+
+
 const App = ()=>{
   return (
     <div className="flex flex-col min-h-screen bg-zinc-900">
@@ -20,6 +23,7 @@ const App = ()=>{
         <Route  path= "/all-books"  element ={<AllBooks/>} /> 
         <Route  path= "/cart"  element ={<Cart/>} /> 
         <Route  path= "/profile"  element ={<Profile/>} /> 
+        <Route  path= "/book/:id"  element ={<ViewBookDetails/>} /> 
       </Routes>
       </main>
       <Footer/>
