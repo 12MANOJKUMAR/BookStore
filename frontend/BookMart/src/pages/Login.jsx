@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: ""
   });
   const [message, setMessage] = useState("");
@@ -42,10 +42,10 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
           <input
-            type="email"
-            name="email"
-            placeholder="Email Address"
-            value={formData.email}
+            type="text"
+            name="username"
+            placeholder="Username"
+            value={formData.username}
             onChange={handleChange}
             className="px-4 py-2 rounded bg-zinc-700 text-white outline-none placeholder-gray-400"
           />

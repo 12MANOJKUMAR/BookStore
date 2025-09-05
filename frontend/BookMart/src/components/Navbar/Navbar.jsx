@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import logo from "../../assets/bookmart-logo.png";
 import { FaGripLines } from "react-icons/fa";
 import { useState } from "react";
+import { useSelector } from "react-redux";
 
 const Navbar = () => {
   const links = [
@@ -12,7 +13,13 @@ const Navbar = () => {
   ];
 
   const [open, setOpen] = useState(false); // boolean use karte hain
-
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  
+  if(isLoggedIn === false)
+  {
+    links.splice(2,2); // remove cart and profile link if not logged in
+    
+  }
   return (
     <>
       <nav className="navbar relative z-50 bg-zinc-800 text-white px-8 py-4 flex items-center justify-between">
