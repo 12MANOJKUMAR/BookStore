@@ -12,14 +12,14 @@ const Navbar = () => {
     { title: "Profile", link: "/profile" },
   ];
 
-  const [open, setOpen] = useState(false); // boolean use karte hain
+  const [open, setOpen] = useState(false);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
-  
-  if(isLoggedIn === false)
-  {
-    links.splice(2,2); // remove cart and profile link if not logged in
-    
+
+  // agar login nahi hai to cart/profile hata do
+  if (!isLoggedIn) {
+    links.splice(2, 2);
   }
+
   return (
     <>
       <nav className="navbar relative z-50 bg-zinc-800 text-white px-8 py-4 flex items-center justify-between">
@@ -38,24 +38,30 @@ const Navbar = () => {
               {item.title}
             </Link>
           ))}
-          <Link
-            to={"/login"}
-            className="px-4 py-1 border border-blue-500 rounded transition-all duration-300 hover:bg-amber-50 hover:text-zinc-700"
-          >
-            SignIn
-          </Link>
-          <Link
-            to={"/signup"}
-            className="px-4 py-1 bg-blue-500 rounded transition-all duration-300 hover:bg-amber-50 text-zinc-200 hover:text-zinc-700"
-          >
-            SignUp
-          </Link>
+
+          {/* 👇 ye sirf tab dikhna chahiye jab user login nahi hai */}
+          {!isLoggedIn && (
+            <>
+              <Link
+                to={"/login"}
+                className="px-4 py-1 border border-blue-500 rounded transition-all duration-300 hover:bg-amber-50 hover:text-zinc-700"
+              >
+                SignIn
+              </Link>
+              <Link
+                to={"/signup"}
+                className="px-4 py-1 bg-blue-500 rounded transition-all duration-300 hover:bg-amber-50 text-zinc-200 hover:text-zinc-700"
+              >
+                SignUp
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile menu button */}
         <button
-          className=" block md:hidden text-white text-2xl hover:text-amber-400"
-          onClick={() => setOpen(!open)} // toggle
+          className="block md:hidden text-white text-2xl hover:text-amber-400"
+          onClick={() => setOpen(!open)}
         >
           <FaGripLines />
         </button>
@@ -72,25 +78,31 @@ const Navbar = () => {
             to={item.link}
             key={i}
             className="hover:text-blue-500 mb-6 text-white text-3xl font-semibold transition-all duration-300"
-            onClick={() => setOpen(false)} // menu close on click
+            onClick={() => setOpen(false)}
           >
             {item.title}
           </Link>
         ))}
-        <Link
-          to={"/login"}
-          className="px-4 py-1 border border-blue-500 rounded transition-all duration-300 hover:bg-amber-50 hover:text-zinc-700 mb-4 text-zinc-200"
-          onClick={() => setOpen(false)}
-        >
-          SignIn
-        </Link>
-        <Link
-          to={"/signup"}
-          className="px-4 py-1 bg-blue-500 rounded transition-all duration-300 hover:bg-amber-50 text-zinc-200 hover:text-zinc-700"
-          onClick={() => setOpen(false)}
-        >
-          SignUp
-        </Link>
+
+        {/* 👇 mobile menu me bhi same condition */}
+        {!isLoggedIn && (
+          <>
+            <Link
+              to={"/login"}
+              className="px-4 py-1 border border-blue-500 rounded transition-all duration-300 hover:bg-amber-50 hover:text-zinc-700 mb-4 text-zinc-200"
+              onClick={() => setOpen(false)}
+            >
+              SignIn
+            </Link>
+            <Link
+              to={"/signup"}
+              className="px-4 py-1 bg-blue-500 rounded transition-all duration-300 hover:bg-amber-50 text-zinc-200 hover:text-zinc-700"
+              onClick={() => setOpen(false)}
+            >
+              SignUp
+            </Link>
+          </>
+        )}
       </div>
     </>
   );

@@ -1,14 +1,18 @@
 import { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { authActions } from "../store/auth";
 
 const Login = () => {
   const [formData, setFormData] = useState({
     username: "",
     password: ""
   });
-  const [message, setMessage] = useState("");
 
+  const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   // Handle input change
   const handleChange = (e) => {
     setFormData({
@@ -21,17 +25,25 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Dummy login API (reqres.in)
-      const response = await axios.post("https://reqres.in/api/login", {
-        email: formData.email,
+      const response = await axios.post("http://localhost:1000/api/v1/sign-in", {
+        username: formData.username,
         password: formData.password
       });
 
       console.log(response.data);
-      setMessage("Login successful! Token: " + response.data.token);
+
+      dispatch(authActions.login());
+      dispatch(authActions.changeRole(response.data.role));
+      // ✅ Save token & user info in localStorage
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("userId", response.data.id);
+      localStorage.setItem("role", response.data.role);
+
+      setMessage("Login successful!");
+      navigate("/profile"); // ✅ redirect
     } catch (error) {
       console.error(error);
-      setMessage("Login failed: " + (error.response?.data?.error || "Unknown error"));
+      setMessage("Login failed: " + (error.response?.data?.message || "Unknown error"));
     }
   };
 
@@ -48,6 +60,7 @@ const Login = () => {
             value={formData.username}
             onChange={handleChange}
             className="px-4 py-2 rounded bg-zinc-700 text-white outline-none placeholder-gray-400"
+            required
           />
           <input
             type="password"
@@ -56,6 +69,7 @@ const Login = () => {
             value={formData.password}
             onChange={handleChange}
             className="px-4 py-2 rounded bg-zinc-700 text-white outline-none placeholder-gray-400"
+            required
           />
           <button
             type="submit"
@@ -67,7 +81,6 @@ const Login = () => {
 
         {message && <p className="mt-4 text-center text-gray-300">{message}</p>}
 
-        {/* 👇 Register link */}
         <p className="mt-6 text-center text-gray-400 text-sm">
           Don’t have an account?{" "}
           <Link to="/signup" className="text-blue-400 hover:underline">

@@ -2,14 +2,17 @@ import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
-    name: "",
+    username: "",
     email: "",
     password: "",
     address: "",
   });
+
+  const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -18,18 +21,30 @@ const SignUp = () => {
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const { name, value } = e.target;
+  setFormData({ ...formData, [name]: value });
+};
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
-    }
-    console.log("User Data:", formData);
-    // API call for signup here
-  };
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!formData.username || !formData.email || !formData.password || !formData.address) {
+    alert("Please fill all the fields");
+    return;
+  }
+
+  try {
+    const response = await axios.post("http://localhost:1000/api/v1/signup", formData);
+    console.log("Signup success:", response.data);
+    alert("Signup successful!");
+    navigate("/login"); // if you want redirect
+  } catch (error) {
+    console.error("Signup error:", error.response?.data || error.message);
+    alert(error.response?.data?.message || "Signup failed");
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-900 px-4">
@@ -40,9 +55,9 @@ const SignUp = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
-            name="name"
+            name="username"
             placeholder="Full Name"
-            value={formData.name}
+            value={formData.username}
             onChange={handleChange}
             className="w-full p-3 rounded bg-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
             required
