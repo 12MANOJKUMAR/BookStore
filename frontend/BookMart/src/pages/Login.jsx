@@ -4,53 +4,46 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { authActions } from "../store/auth";
 
-const Login = () => {
-  const [formData, setFormData] = useState({
-    username: "",
-    password: ""
-  });
+axios.defaults.withCredentials = true;
 
+const Login = () => {
+  const [formData, setFormData] = useState({ username: "", password: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  // Handle input change
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:1000/api/v1/sign-in", {
-        username: formData.username,
-        password: formData.password
-      });
+      const response = await axios.post(
+        "http://localhost:1000/api/v1/sign-in",
+        formData,
+        { withCredentials: true }
+      );
 
-      console.log(response.data);
-
+      // ✅ update redux state
       dispatch(authActions.login());
       dispatch(authActions.changeRole(response.data.role));
-      // ✅ Save token & user info in localStorage
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("userId", response.data.id);
-      localStorage.setItem("role", response.data.role);
 
-      setMessage("Login successful!");
-      navigate("/profile"); // ✅ redirect
+      navigate("/profile");
     } catch (error) {
       console.error(error);
-      setMessage("Login failed: " + (error.response?.data?.message || "Unknown error"));
+      setMessage(
+        "Login failed: " + (error.response?.data?.message || "Unknown error")
+      );
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-900 px-4">
       <div className="bg-zinc-800 p-6 sm:p-8 rounded-2xl shadow-lg w-full max-w-sm -mt-20">
-        <h2 className="text-2xl font-semibold text-center text-white mb-6">Login</h2>
+        <h2 className="text-2xl font-semibold text-center text-white mb-6">
+          Login
+        </h2>
 
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
           <input

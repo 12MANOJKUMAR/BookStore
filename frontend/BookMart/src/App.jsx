@@ -10,20 +10,42 @@ import Profile from './pages/Profile'
 import ViewBookDetails from './components/ViewBookDetails/ViewBookDetails';
 import { useDispatch, useSelector } from 'react-redux'
 import { authActions } from './store/auth'
-import { useEffect } from 'react'
+import { useEffect,useState } from 'react'
+import axios from 'axios'
+import Loader from './components/Loader/Loader'
+import Favourites from './components/Profile/Favourites'
+import UserOrderHistory from './components/Profile/UserOrderHistory'
+import Setting from './components/Profile/Setting'
 
 
 const App = ()=>{
   const dispatch = useDispatch();
   const role = useSelector((state)=>state.auth.role);
+  const [authChecked, setAuthChecked] = useState(false);
   useEffect(()=>{
-    if(localStorage.getItem("id") &&
-     localStorage.getItem("token") &&
-     localStorage.getItem("role")){
-      dispatch(authActions.login());
-      dispatch(authActions.changeRole(localStorage.getItem("role")));
-    }
-  },[])
+   const checkAuth = async () => {
+      try {
+        const res = await axios.get('http://localhost:1000/api/v1/get-user-information', {
+          withCredentials: true,
+        });
+        dispatch(authActions.login());
+        dispatch(authActions.changeRole(res.data.role));
+      } catch (err) {
+        dispatch(authActions.logout());
+      } finally {
+        setAuthChecked(true); // ✅ auth check complete
+      }
+    };
+    checkAuth();
+  }, [dispatch]);
+
+  if (!authChecked) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-zinc-900 text-white">
+        <Loader /> {/* loader instead of flicker */}
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col min-h-screen bg-zinc-900">
       <Navbar/>
@@ -34,7 +56,11 @@ const App = ()=>{
         <Route  path= "/signup"  element ={<SignUp/>} /> 
         <Route  path= "/all-books"  element ={<AllBooks/>} /> 
         <Route  path= "/cart"  element ={<Cart/>} /> 
-        <Route  path= "/profile"  element ={<Profile/>} /> 
+        <Route  path= "/profile"  element ={<Profile/>} >
+        <Route index element = {<Favourites/>} />
+        <Route path="/profile/orderHistory" element = {<UserOrderHistory/>} />
+        <Route path="/profile/settings" element = {<Setting/>} />
+        </Route> 
         <Route  path= "/book/:id"  element ={<ViewBookDetails/>} /> 
       </Routes>
       </main>
