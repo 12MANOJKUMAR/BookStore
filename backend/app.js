@@ -1,26 +1,38 @@
-const express= require('express');
+const express = require("express");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+require("dotenv").config();
+require("./conn/conn");
+
 const app = express();
-const cors =require("cors");
-require('dotenv').config();
-require('./conn/conn');
-const User = require("./routes/user")
+
+// ✅ Middleware
+app.use(
+  cors({
+    origin: "http://localhost:5173", // frontend ka port
+    methods: ["GET", "POST", "PUT", "DELETE"], // allowed methods
+    credentials: true, // cookies / headers allow karega
+  })
+);
+app.use(express.json());
+app.use(cookieParser());
+
+// ✅ Import routes
+const User = require("./routes/user");
 const Books = require("./routes/book");
 const Favourite = require("./routes/favourite");
-const Cart = require("./routes/cart")
+const Cart = require("./routes/cart");
 const Order = require("./routes/order");
-app.use(cors());
-app.use(express.json());
 
-// routes
-app.use("/api/v1" , User);
+// ✅ Use routes
+app.use("/api/v1", User);
 app.use("/api/v1", Books);
 app.use("/api/v1", Favourite);
 app.use("/api/v1", Cart);
 app.use("/api/v1", Order);
 
-
-
-//creating port
-app.listen(process.env.PORT,()=>{
-    console.log(`Server is running on port ${process.env.PORT}`);
-}) 
+// ✅ Server
+const PORT = process.env.PORT || 1000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
+});
