@@ -43,7 +43,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="bg-zinc-900 px-2 md:px-12 flex flex-col md:flex-row h-screen py-8 gap-4 text-white">
+    <div className="bg-zinc-900 px-2 md:px-12 flex flex-col md:flex-row h-auto py-8 gap-4 text-white">
       {!user && (
         <div className="w-full h-[100%] flex items-center justify-center">
           <Loader />

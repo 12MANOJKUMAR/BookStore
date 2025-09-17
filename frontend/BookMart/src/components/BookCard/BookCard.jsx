@@ -1,6 +1,9 @@
 import {Link} from 'react-router-dom';
-const BookCard = ({ data }) => {
-  return (
+import axios from 'axios';
+
+const BookCard = ({ data, favourites, onRemove }) => {
+
+   return (
     <>
       <Link to={`/book/${data._id}`}>
         <div className="bg-zinc-800 rounded p-4 flex flex-col">
@@ -12,6 +15,13 @@ const BookCard = ({ data }) => {
           <p className='mt-2 text-zinc-200 font-semibold'>₹ {data.price}</p>
           </div>
       </Link>
+      {
+        favourites && (
+          <button className='mt-3 w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded transition-colors duration-200 flex items-center justify-center gap-2'  onClick={() => onRemove(data._id)}>
+            Remove from Favourites
+          </button>
+        )}
+      
     </>
   );
 };

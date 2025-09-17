@@ -3,11 +3,58 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Loader from "../Loader/Loader";
 import { GrLanguage } from "react-icons/gr";
+import { FaHeart, FaRegHeart, FaShoppingCart } from "react-icons/fa";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const ViewBookDetails = () => {
   const { id } = useParams();
   const [Data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  const role = useSelector((state) => state.auth.role);
+  const navigate = useNavigate();
+  
+  
+  const handleFavoriteClick = async() => {
+    const response = await axios.put('http://localhost:1000/api/v1/added-in-favourite', { bookId: id }, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}` 
+      }
+    });
+   alert(response.data.message);
+  };
+
+  const handleAddToCart = async() => {
+   const response = await axios.put('http://localhost:1000/api/v1/cart', { bookId: id }, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    
+   alert(response.data.message);
+  };
+
+   const handleEditBook = () => {
+    // Navigate to edit page or open edit modal
+    navigate(`/edit-book/${id}`);
+  };
+
+    const handleDeleteBook = async () => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this book?");
+    if (confirmDelete) {
+      try {
+        // Add your delete API call here
+        await axios.delete(`http://localhost:1000/api/v1/delete-book/${id}`);
+        navigate('/books'); // Navigate to books list after deletion
+      } catch (error) {
+        console.error("Error deleting book:", error);
+      }
+    }
+  };
+
+
 
   useEffect(() => {
     const fetchBookDetails = async () => {
@@ -38,15 +85,61 @@ const ViewBookDetails = () => {
 
   return (
     <div className="px-4 lg:px-12 py-8 bg-zinc-900 flex flex-col md:flex-row gap-8 rounded">
-      <div className="bg-zinc-800 rounded p-4 h-[60vh] lg:h-[88vh] w-full lg:w-3/6 flex items-center justify-center ">
+      <div className="bg-zinc-800 rounded p-4 md:p-6 lg:p-8 h-[50vh] md:h-[60vh] lg:h-[88vh] w-full lg:w-3/6 flex items-center justify-center relative ">
         {Data.url ? (
           <img
             src={Data.url}
             alt={Data.title || "Book"}
-            className=" h-[50vh] lg:h-[70vh]"
+            className="h-[40vh] md:h-[45vh] lg:h-[70vh] object-contain"
           />
         ) : (
           <p className="text-gray-400">No image available</p>
+        )}
+
+           {/* Icon buttons positioned to the right of the image */}
+        {isLoggedIn && role === 'user' && (
+          <div className="absolute top-2 right-2 flex flex-col gap-2 md:gap-3 lg:gap-4 md:top-4 lg:top-6 md:right-4 lg:right-6">
+          <button
+            onClick={handleFavoriteClick}
+            className="bg-zinc-700 p-3 rounded-full hover:bg-zinc-600 transition-colors duration-200 group"
+            title="Add to favorites"
+          >
+            {isFavorite ? (
+              <FaHeart className="text-red-500 text-xl" />
+            ) : (
+              <FaRegHeart className="text-zinc-300 text-xl group-hover:text-red-500 transition-colors" />
+            )}
+          </button>
+          
+          <button
+            onClick={handleAddToCart}
+            className="bg-zinc-700 p-3 rounded-full hover:bg-zinc-600 transition-colors duration-200 group"
+            title="Add to cart"
+          >
+            <FaShoppingCart className="text-zinc-300 text-xl group-hover:text-blue-400 transition-colors" />
+          </button>
+        </div>
+      )}
+
+      {/* Admin action buttons */}
+        {isLoggedIn && role === 'admin' && (
+          <div className="absolute top-2 right-2 flex flex-col gap-2 md:gap-3 lg:gap-4 md:top-4 lg:top-6 md:right-4 lg:right-6">
+            <button
+              onClick={handleEditBook}
+              className="bg-zinc-700 p-3 rounded-full hover:bg-zinc-600 transition-colors duration-200 group"
+              title="Edit book"
+            >
+              <FaEdit className="text-zinc-300 text-xl group-hover:text-green-400 transition-colors" />
+            </button>
+            
+            <button
+              onClick={handleDeleteBook}
+              className="bg-zinc-700 p-3 rounded-full hover:bg-zinc-600 transition-colors duration-200 group"
+              title="Delete book"
+            >
+              <FaTrash className="text-zinc-300 text-xl group-hover:text-red-500 transition-colors" />
+            </button>
+          </div>
         )}
       </div>
       <div className="p-4 w-full lg:w-3/6">

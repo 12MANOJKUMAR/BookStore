@@ -1,14 +1,75 @@
-
+import React, { useState } from "react";
+import { useEffect } from "react";
+import axios from "axios";
+import BookCard from "../BookCard/BookCard";
 
 const Favourites = () => {
+  const [favourites, setFavourites] = useState([]);
+
+  useEffect(() => {
+    // Fetch favourite books logic here
+    const fetchFavourites = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:1000/api/v1/favourites",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setFavourites(response.data.data);
+      } catch (error) {
+        console.error("Error fetching favourites:", error);
+      }
+    };
+
+    fetchFavourites();
+  }, []);
+
+  // ✅ remove from favourites and update UI
+  const handleRemove = async (bookId) => {
+    try {
+      const response = await axios.put(
+        "http://localhost:1000/api/v1/remove-from-favourite",
+        { bookId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      alert(response.data.message);
+
+      // ✅ remove book from local state (UI updates instantly)
+      setFavourites((prev) => prev.filter((item) => item._id !== bookId));
+    } catch (error) {
+      console.error("Error removing from favourites:", error);
+    }
+  };
 
   return (
-    <div className="p-6 bg-zinc-900 rounded-xl shadow-lg text-zinc-200">
-      <h2 className="text-2xl font-bold mb-4">Favourites</h2>
-      <p>Your favourite books will appear here.</p>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+      {favourites.length === 0 && (
+        <p className="text-zinc-500 text-center  lg:text-5xl col-span-full">
+          No favourite books found.
+        </p>
+      )}
+      {favourites &&
+        favourites.map((items, i) => (
+          <div key={i}>
+            
+            <BookCard
+              key={items._id}
+              data={items}
+              favourites={true}
+              onRemove={handleRemove} // ✅ pass callback
+            />
+          </div>
+        ))}
     </div>
   );
-}
-
+};
 
 export default Favourites;
