@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import AllBooks from './pages/AllBooks'
 import Cart from './pages/Cart'
+import Payment from './pages/Payment'
 import Profile from './pages/Profile'
 import ViewBookDetails from './components/ViewBookDetails/ViewBookDetails';
 import { useDispatch, useSelector } from 'react-redux'
@@ -16,6 +17,9 @@ import Loader from './components/Loader/Loader'
 import Favourites from './components/Profile/Favourites'
 import UserOrderHistory from './components/Profile/UserOrderHistory'
 import Setting from './components/Profile/Setting'
+import AdminAllOrders from './components/Profile/AdminAllOrders'
+import AdminAddBook from './components/Profile/AdminAddBook'
+import EditBook from './pages/EditBook'
 
 
 const App = ()=>{
@@ -56,12 +60,17 @@ const App = ()=>{
         <Route  path= "/signup"  element ={<SignUp/>} /> 
         <Route  path= "/all-books"  element ={<AllBooks/>} /> 
         <Route  path= "/cart"  element ={<Cart/>} /> 
+        <Route  path= "/payment"  element ={<Payment/>} /> 
         <Route  path= "/profile"  element ={<Profile/>} >
         <Route index element = {<Favourites/>} />
         <Route path="/profile/orderHistory" element = {<UserOrderHistory/>} />
         <Route path="/profile/settings" element = {<Setting/>} />
+        {/* Admin routes */}
+        <Route path="/profile/admin/orders" element={<AdminAllOrders/>} />
+        <Route path="/profile/admin/add-book" element={<AdminAddBook/>} />
         </Route> 
         <Route  path= "/book/:id"  element ={<ViewBookDetails/>} /> 
+        <Route  path= "/edit-book/:id"  element ={ role === 'admin' ? <EditBook/> : <Home/> } /> 
       </Routes>
       </main>
       <Footer/>

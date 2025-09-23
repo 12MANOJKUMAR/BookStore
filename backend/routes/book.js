@@ -7,11 +7,9 @@ const {AuthenticateToken} = require("./userAuth");
 // add book - admin
 router.post("/add-book", AuthenticateToken, async(req, res)=>{
   try{
-      //  check the user is admin or not--
-      const {id}= req.headers;
-      const user = await User.findById(id);
-      if(user.role!=="admin"){
-        return res.status(400).json({message :"You do not have admin access..."})
+      //  check the user is admin or not-- use JWT payload
+      if (req.user?.role !== "admin") {
+        return res.status(403).json({message :"You do not have admin access"});
       }
     const book = new Book({
       url: req.body.url,
@@ -23,7 +21,7 @@ router.post("/add-book", AuthenticateToken, async(req, res)=>{
     });
 
     await book.save();
-    return res.status(200).json({message:"book added..."})
+    return res.status(200).json({message:"book added", data: book})
 
   }
   catch(error){
@@ -34,19 +32,22 @@ router.post("/add-book", AuthenticateToken, async(req, res)=>{
 
 // update-book- admin
 
-router.put("/update-book",AuthenticateToken, async(req, res)=>{
+router.put("/update-book/:bookId",AuthenticateToken, async(req, res)=>{
   try{
-    const {bookId}= req.headers;
-    await Book.findByIdAndUpdate(bookId,{
+    if (req.user?.role !== "admin") {
+      return res.status(403).json({message :"You do not have admin access"});
+    }
+    const {bookId}= req.params;
+    const updated = await Book.findByIdAndUpdate(bookId,{
       url: req.body.url,
       title: req.body.title,
       author: req.body.author,
       price: req.body.price,
       desc: req.body.desc,
       language: req.body.language
-    })
+    }, { new: true })
 
-    return res.status(200).json({message: "book updated successfully..."})
+    return res.status(200).json({message: "book updated successfully", data: updated})
   }
   catch(error){
     console.error(error);
@@ -55,11 +56,14 @@ router.put("/update-book",AuthenticateToken, async(req, res)=>{
 })
 
 // delete-book(admin)
-router.delete("/delete-book",AuthenticateToken, async(req, res)=>{
+router.delete("/delete-book/:bookId",AuthenticateToken, async(req, res)=>{
   try{
-    const {bookId} = req.headers;
+    if (req.user?.role !== "admin") {
+      return res.status(403).json({message :"You do not have admin access"});
+    }
+    const {bookId} = req.params;
     await Book.findByIdAndDelete(bookId);
-    return res.status(200).json({message: "Book is deleted"});
+    return res.status(200).json({message: "Book deleted"});
 
   }
   catch(error){

@@ -25,7 +25,14 @@ const Login = () => {
         { withCredentials: true }
       );
 
-      // ✅ update redux state
+      // Fetch user data after successful login
+      const userResponse = await axios.get(
+        "http://localhost:1000/api/v1/get-user-information",
+        { withCredentials: true }
+      );
+
+      // ✅ update redux state with user data
+      dispatch(authActions.setUser(userResponse.data));
       dispatch(authActions.login());
       dispatch(authActions.changeRole(response.data.role));
 

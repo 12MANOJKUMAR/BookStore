@@ -36,7 +36,6 @@ const SignUp = () => {
 
   try {
     const response = await axios.post("http://localhost:1000/api/v1/signup", formData);
-    console.log("Signup success:", response.data);
     alert("Signup successful!");
     navigate("/login"); // if you want redirect
   } catch (error) {

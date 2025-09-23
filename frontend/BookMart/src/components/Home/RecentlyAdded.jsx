@@ -17,11 +17,11 @@ const RecentlyAdded = ()=>{
       },
       []);
   return (
-    <div className="recent m-8 px-2">
-      <h4 className="text-3xl text-yellow-100">Recently added books</h4>
-      {!Data && <div className="loader flex items-center justify-center h-96"><span className="text-white">Loading...</span>
+    <div className="recent px-4 sm:px-6 md:px-8 py-8">
+      <h4 className="text-2xl sm:text-3xl text-yellow-100">Recently added books</h4>
+      {!Data && <div className="loader flex flex-col gap-4 items-center justify-center h-72 sm:h-96"><span className="text-white">Loading...</span>
         <Loader /></div>}
-      <div className="my-8 grid grid-col1 sd:grid-cols-3 md:grid-cols-4 gap-4 ">
+      <div className="my-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6 md:gap-8">
         {Data && Data.map((item,i)=>(
         <div key={i}>
         <BookCard data={item}/>

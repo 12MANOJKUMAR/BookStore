@@ -1,11 +1,21 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Heart, Clock, Settings, LogOut } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Heart, Clock, Settings, LogOut, Camera, Upload } from "lucide-react";
+import { useSelector, useDispatch } from "react-redux";
+import { authActions } from "../../store/auth";
+import axios from "axios";
 
-const Sidebar = ({ data }) => {
+const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+  const role = useSelector((state) => state.auth.role);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
   
-  const menuItems = [
+  let menuItems = [
     { 
       path: "/profile", 
       label: "Favourites", 
@@ -26,23 +36,176 @@ const Sidebar = ({ data }) => {
     },
   ];
 
+  if (role === 'admin') {
+    // Remove Favourites and Order History for admin role
+    menuItems = menuItems.filter(item => item.label !== 'Favourites' && item.label !== 'Order History');
+    menuItems.unshift({
+      path: "/profile/admin/add-book",
+      label: "Add Book",
+      icon: Upload,
+      gradient: "from-emerald-600 to-teal-600"
+    });
+    menuItems.unshift({
+      path: "/profile/admin/orders",
+      label: "All Orders",
+      icon: Clock,
+      gradient: "from-amber-600 to-orange-600"
+    });
+  }
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      
+      // Convert image to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64Image = e.target.result;
+        
+        try {
+          // Update profile with new avatar
+          await axios.put(
+            "http://localhost:1000/api/v1/update-profile",
+            { avatar: base64Image },
+            { withCredentials: true }
+          );
+
+          // Update Redux state
+          dispatch(authActions.updateUser({ avatar: base64Image }));
+          
+          alert('Profile picture updated successfully!');
+        } catch (error) {
+          console.error("Error updating avatar:", error);
+          alert('Failed to update profile picture');
+        } finally {
+          setIsUploading(false);
+        }
+      };
+      
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Error processing image:", error);
+      alert('Failed to process image');
+      setIsUploading(false);
+    }
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      
+      // Call logout API to clear server-side session
+      await axios.post(
+        "http://localhost:1000/api/v1/logout",
+        {},
+        { withCredentials: true }
+      );
+      
+      // Clear Redux state
+      dispatch(authActions.logout());
+      
+      // Clear any local storage items
+      localStorage.removeItem('token');
+      
+      // Navigate to home page
+      navigate("/");
+      
+    } catch (error) {
+      console.error("Logout error:", error);
+      
+      // Even if API call fails, still clear local state
+      dispatch(authActions.logout());
+      localStorage.removeItem('token');
+      navigate("/");
+      
+      // Show error message (optional)
+      alert("Logout completed (some server cleanup may have failed)");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
     <div className="sidebar bg-gradient-to-b from-zinc-900 to-zinc-800 p-6 rounded-xl shadow-2xl flex flex-col h-full">
       {/* Profile Section */}
       <div className="flex flex-col items-center">
-        <div className="relative group">
+        <div className="relative group cursor-pointer" onClick={handleImageClick}>
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <img
-            src={data.avatar || "/default-avatar.png"}
-            alt="profile-pic"
-            className="relative h-24 w-24 rounded-full object-cover border-4 border-zinc-700 group-hover:border-emerald-600/50 transition-all duration-300"
-          />
+          <div className="relative h-24 w-24 rounded-full border-4 border-zinc-700 group-hover:border-emerald-600/50 transition-all duration-300 overflow-hidden">
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt="profile-pic"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="h-full w-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-2xl">
+                {user?.username?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+            )}
+          </div>
+          
+          {/* Upload overlay */}
+          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            {isUploading ? (
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <Camera size={24} className="text-white" />
+            )}
+          </div>
         </div>
         
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
+        
         <h3 className="text-zinc-100 mt-4 text-xl font-bold tracking-wide">
-          {data.username}
+          {user?.username || "Loading..."}
         </h3>
-        <p className="text-zinc-400 text-sm mt-1">{data.email}</p>
+        <p className="text-zinc-400 text-sm mt-1">{user?.email || "Loading..."}</p>
+        
+        {/* Upload button */}
+        <button
+          onClick={handleImageClick}
+          disabled={isUploading}
+          className="mt-3 flex items-center gap-2 px-3 py-1 bg-zinc-700 hover:bg-zinc-600 disabled:bg-zinc-800 text-zinc-300 text-xs rounded-full transition-all duration-300 disabled:cursor-not-allowed"
+        >
+          {isUploading ? (
+            <>
+              <div className="w-3 h-3 border border-zinc-300 border-t-transparent rounded-full animate-spin"></div>
+              <span>Uploading...</span>
+            </>
+          ) : (
+            <>
+              <Upload size={12} />
+              <span>Change Photo</span>
+            </>
+          )}
+        </button>
         
         <div className="w-full mt-6 h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent"></div>
       </div>
@@ -79,17 +242,31 @@ const Sidebar = ({ data }) => {
 
       {/* Logout Button */}
       <div className="mt-auto pt-6">
-        <button className="
-          w-full flex items-center justify-center gap-3 
-          bg-gradient-to-r from-red-600 to-red-700 
-          hover:from-red-700 hover:to-red-800
-          text-white font-semibold py-3 px-4 rounded-lg
-          transform transition-all duration-300 
-          hover:scale-105 active:scale-95
-          shadow-lg hover:shadow-xl
-        ">
-          <LogOut size={20} />
-          <span>Logout</span>
+        <button 
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="
+            w-full flex items-center justify-center gap-3 
+            bg-gradient-to-r from-red-600 to-red-700 
+            hover:from-red-700 hover:to-red-800
+            disabled:from-gray-600 disabled:to-gray-600
+            text-white font-semibold py-3 px-4 rounded-lg
+            transform transition-all duration-300 
+            hover:scale-105 active:scale-95 disabled:scale-100
+            shadow-lg hover:shadow-xl disabled:cursor-not-allowed
+          "
+        >
+          {isLoggingOut ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Logging out...</span>
+            </>
+          ) : (
+            <>
+              <LogOut size={20} />
+              <span>Logout</span>
+            </>
+          )}
         </button>
       </div>
     </div>

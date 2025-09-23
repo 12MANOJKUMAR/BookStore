@@ -3,15 +3,15 @@ import axios from "axios";
 import Loader from "../components/Loader/Loader";
 import Sidebar from "../components/Profile/Sidebar";
 import { Outlet } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { authActions } from "../store/auth";
 
 axios.defaults.withCredentials = true;
 
 const Profile = () => {
-  const [user, setUser] = useState(null);
   const [message, setMessage] = useState("");
   const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -20,9 +20,9 @@ const Profile = () => {
           "http://localhost:1000/api/v1/get-user-information",
           { withCredentials: true }
         );
-        setUser(response.data);
-
-        // ✅ update redux state
+        
+        // ✅ update redux state with user data
+        dispatch(authActions.setUser(response.data));
         dispatch(authActions.login());
         dispatch(authActions.changeRole(response.data.role));
       } catch (error) {
@@ -31,8 +31,11 @@ const Profile = () => {
       }
     };
 
-    fetchUser();
-  }, [dispatch]);
+    // Only fetch if user is not already in Redux state
+    if (!user) {
+      fetchUser();
+    }
+  }, [dispatch, user]);
 
   if (message) {
     return (
@@ -52,7 +55,7 @@ const Profile = () => {
       {user && (
         <>
           <div className="w-full md:w-1/6">
-            <Sidebar data={user} />
+            <Sidebar />
           </div>
           <div className="w-full md:w-5/6">
             <Outlet />

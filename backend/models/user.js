@@ -35,11 +35,19 @@ const  user= new mongoose.Schema({
     }
   ],
   cart: [
-    {
-      type: mongoose.Types.ObjectId,
+  {
+    book: {
+      type: mongoose.Schema.Types.ObjectId,
       ref: "book",
+      required: true,
+    },
+    qty: {
+      type: Number,
+      default: 1,
+      min: 1,
     }
-  ],
+  }
+],
   orders: [
     {
       type: mongoose.Types.ObjectId,

@@ -14,44 +14,64 @@ router.post("/order", AuthenticateToken, async (req, res) => {
       return res.status(400).json({ message: "Order data is required" });
     }
 
-    const savedOrders = [];
+    // Build order items with qty (matching the schema)
+    const orderItems = order.map(item => ({
+      book: item._id,
+      qty: item.qty || 1
+    }));
 
-    for (const orderData of order) {
-      const newOrder = new Order({
-        user: id,
-        book: [orderData._id], // Assuming _id is bookId
-        totalAmount: orderData.price || 0
-      });
+    // Calculate total amount
+    const totalAmount = order.reduce(
+      (sum, item) => sum + (item.price || 0) * (item.qty || 1),
+      0
+    );
 
-      const orderDataFromDb = await newOrder.save();
-      savedOrders.push(orderDataFromDb);
-
-      // Save order reference in User model
-      await User.findByIdAndUpdate(id, {
-        $push: { orders: orderDataFromDb._id },
-      });
-    }
-
-    // Clear the ordered books from the cart in one go
-    await User.findByIdAndUpdate(id, {
-      $pull: { cart: { $in: order.map((o) => o._id) } },
+    // Save order
+    const newOrder = new Order({
+      user: id,
+      books: orderItems,
+      totalAmount
     });
+
+    const savedOrder = await newOrder.save();
+
+    // Save order ref in user
+    await User.findByIdAndUpdate(id, { $push: { orders: savedOrder._id } });
+
+    // Clear cart (if stored inside user doc)
+    await User.findByIdAndUpdate(id, { $set: { cart: [] } });
 
     return res.json({
       status: "success",
       message: "Order placed successfully",
-      orders: savedOrders,
+      order: savedOrder
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "An error occurred...",
-    });
+    console.error("Order error:", error);
+    return res.status(500).json({ message: "An error occurred..." });
   }
 });
 
 // get order history of a particular user...
+router.get("/orders", AuthenticateToken, async (req, res) => {
+  try {
+    const id = req.user.id;
+    const orders = await Order.find({ user: id })
+      .populate("books.book")
+      .sort({ createdAt: -1 });
 
+    return res.json({
+      status: "success",
+      orders: orders,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "An error occurred while fetching orders",
+    });
+  }
+});
+
+// Alternative route for backward compatibility
 router.get("/get-order-history", AuthenticateToken, async (req, res) => {
   try {
     const id = req.user.id;
@@ -66,7 +86,6 @@ router.get("/get-order-history", AuthenticateToken, async (req, res) => {
       data: orderData,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       message: "an error occured...",
     });
@@ -77,12 +96,17 @@ router.get("/get-order-history", AuthenticateToken, async (req, res) => {
 
 router.get("/get-all-history", AuthenticateToken, async (req, res) => {
   try {
+    if (req.user?.role !== "admin") {
+      return res.status(403).json({ message: "You do not have admin access" });
+    }
     const userData = await Order.find()
       .populate({
-        path: "books",
+        path: "books.book",
+        model: "book",
       })
       .populate({
         path: "user",
+        model: "user",
       })
       .sort({ createdAt: -1 });
     return res.json({
@@ -90,7 +114,6 @@ router.get("/get-all-history", AuthenticateToken, async (req, res) => {
       data: userData,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       message: "an error occured...",
     });
@@ -100,6 +123,9 @@ router.get("/get-all-history", AuthenticateToken, async (req, res) => {
 // update order status -- admin
 router.put('/update-status/:id', AuthenticateToken, async(req, res)=>{
   try{
+    if (req.user?.role !== "admin") {
+      return res.status(403).json({ message: "You do not have admin access" });
+    }
     const {id} = req.params;
     await Order.findByIdAndUpdate(id, {status: req.body.status});
     return res.json({
@@ -109,9 +135,34 @@ router.put('/update-status/:id', AuthenticateToken, async(req, res)=>{
 
   }
   catch(error){
-    console.log(error);
     return res.status(500).json({
       message: "an error occured..."
+    })
+  }
+})
+
+// clear order history for a user
+router.delete('/clear-history', AuthenticateToken, async(req, res)=>{
+  try{
+    const id = req.user.id;
+    
+    // Delete all orders for this user
+    await Order.deleteMany({ user: id });
+    
+    // Clear orders array in User model
+    await User.findByIdAndUpdate(id, {
+      $set: { orders: [] },
+    });
+
+    return res.json({
+      status: "success",
+      message: "Order history cleared successfully"
+    });
+
+  }
+  catch(error){
+    return res.status(500).json({
+      message: "An error occurred while clearing order history"
     })
   }
 })

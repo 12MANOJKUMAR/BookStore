@@ -64,8 +64,8 @@ router.post("/sign-in", async (req, res) => {
     // ✅ set cookie
     res.cookie("accessToken", token, {
       httpOnly: true,
-      secure: true,        // only works on https
-      sameSite: "Strict",
+      secure: false,        // set to false for development (http)
+      sameSite: "Lax",      // changed from Strict to Lax for better compatibility
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
@@ -100,12 +100,105 @@ router.put("/update-address", AuthenticateToken, async (req, res) => {
   }
 });
 
+// update user profile
+router.put("/update-profile", AuthenticateToken, async (req, res) => {
+  try {
+    const { username, email, address, avatar } = req.body;
+    const userId = req.user.id;
+
+    // Check if username is already taken by another user
+    if (username) {
+      const existingUser = await User.findOne({ username, _id: { $ne: userId } });
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+    }
+
+    // Check if email is already taken by another user
+    if (email) {
+      const existingEmail = await User.findOne({ email, _id: { $ne: userId } });
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+    }
+
+    const updateData = {};
+    if (username) updateData.username = username;
+    if (email) updateData.email = email;
+    if (address) updateData.address = address;
+    if (avatar) updateData.avatar = avatar;
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+
+    return res.status(200).json({ message: "Profile updated successfully" });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// change password
+router.put("/change-password", AuthenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current password and new password are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters long" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await User.findByIdAndUpdate(userId, { password: hashedNewPassword });
+
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// delete account
+router.delete("/delete-account", AuthenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Delete user and all associated data
+    await User.findByIdAndDelete(userId);
+    
+    // Clear the cookie
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "Lax",
+    });
+
+    return res.status(200).json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // logout
 router.post("/logout", (req, res) => {
   res.clearCookie("accessToken", {
     httpOnly: true,
-    secure: true,
-    sameSite: "Strict",
+    secure: false,
+    sameSite: "Lax",
   });
   return res.status(200).json({ message: "Logged out successfully" });
 });

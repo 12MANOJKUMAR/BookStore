@@ -9,9 +9,8 @@ const order = new mongoose.Schema({
   },
   books: [
     {
-      type: mongoose.Types.ObjectId,
-      ref: "Book",
-      required: true,
+      book: { type: mongoose.Types.ObjectId, ref: "Book", required: true },
+      qty: { type: Number, required: true }
     }
   ],
   totalAmount: {
