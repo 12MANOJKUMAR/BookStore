@@ -6,10 +6,15 @@ require("./conn/conn");
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",             // dev
+  process.env.FRONTEND_URL,  // prod
+];
+
 // ✅ Middleware
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend ka port
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"], // allowed methods
     credentials: true, // cookies / headers allow karega
   })
