@@ -11,7 +11,7 @@ const Favourites = () => {
     const fetchFavourites = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:1000/api/v1/favourites",
+          `${process.env.REACT_APP_API_URL}/favourites`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -31,7 +31,7 @@ const Favourites = () => {
   const handleRemove = async (bookId) => {
     try {
       const response = await axios.put(
-        "http://localhost:1000/api/v1/remove-from-favourite",
+        `${process.env.REACT_APP_API_URL}/remove-from-favourite`,
         { bookId },
         {
           headers: {

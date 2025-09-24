@@ -35,7 +35,7 @@ const SignUp = () => {
   }
 
   try {
-    const response = await axios.post("http://localhost:1000/api/v1/signup", formData);
+    const response = await axios.post(`${process.env.REACT_APP_API_URL}/signup`, formData);
     alert("Signup successful!");
     navigate("/login"); // if you want redirect
   } catch (error) {

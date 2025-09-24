@@ -22,7 +22,7 @@ const BookCard = ({ data, favourites, onRemove, showAddToCart = false, showRemov
 
     try {
       const response = await axios.post(
-        "http://localhost:1000/api/v1/cart",
+        `${process.env.REACT_APP_API_URL}/cart`,
         { bookId: data._id },
         { withCredentials: true }
       );

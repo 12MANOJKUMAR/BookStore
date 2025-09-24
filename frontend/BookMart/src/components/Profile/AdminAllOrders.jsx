@@ -11,7 +11,7 @@ const AdminAllOrders = () => {
   const fetchOrders = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:1000/api/v1/get-all-history",
+        `${process.env.REACT_APP_API_URL}/get-all-history`,
         { withCredentials: true }
       );
       setOrders(res.data.data || []);
@@ -30,7 +30,7 @@ const AdminAllOrders = () => {
   const updateStatus = async (orderId, status) => {
     try {
       await axios.put(
-        `http://localhost:1000/api/v1/update-status/${orderId}`,
+        `${process.env.REACT_APP_API_URL}/update-status/${orderId}`,
         { status },
         { withCredentials: true }
       );

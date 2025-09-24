@@ -44,7 +44,7 @@ const UserOrderHistory = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:1000/api/v1/orders", {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/orders`, {
         withCredentials: true
       });
       setOrders(response.data.orders || []);
@@ -63,7 +63,7 @@ const UserOrderHistory = () => {
 
     try {
       setClearing(true);
-      await axios.delete("http://localhost:1000/api/v1/clear-history", {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/clear-history`, {
         withCredentials: true
       });
       

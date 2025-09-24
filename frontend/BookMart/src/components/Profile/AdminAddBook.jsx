@@ -11,7 +11,7 @@ const AdminAddBook = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await axios.post("http://localhost:1000/api/v1/add-book", form, { withCredentials: true });
+      await axios.post(`${process.env.REACT_APP_API_URL}/add-book`, form, { withCredentials: true });
       alert("Book added");
       setForm({ url: "", title: "", author: "", price: "", desc: "", language: "" });
     } catch (e) {

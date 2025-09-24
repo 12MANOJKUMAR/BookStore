@@ -80,7 +80,7 @@ const Sidebar = () => {
         try {
           // Update profile with new avatar
           await axios.put(
-            "http://localhost:1000/api/v1/update-profile",
+            `${process.env.REACT_APP_API_URL}/update-profile`,
             { avatar: base64Image },
             { withCredentials: true }
           );
@@ -115,7 +115,7 @@ const Sidebar = () => {
       
       // Call logout API to clear server-side session
       await axios.post(
-        "http://localhost:1000/api/v1/logout",
+        `${process.env.REACT_APP_API_URL}/logout`,
         {},
         { withCredentials: true }
       );

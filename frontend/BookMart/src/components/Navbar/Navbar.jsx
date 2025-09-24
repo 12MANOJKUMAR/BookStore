@@ -29,7 +29,7 @@ const Navbar = () => {
 
   const fetchCartCount = async () => {
     try {
-      const response = await axios.get("http://localhost:1000/api/v1/cart", {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/cart`, {
         withCredentials: true
       });
       const cartItems = response.data.cart || [];

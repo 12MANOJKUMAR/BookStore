@@ -9,7 +9,7 @@ const AllBooks =()=>{
   useEffect(()=>{
     const fetch = async ()=>
        {
-        const response = await axios.get('http://localhost:1000/api/v1/get-all-books');
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/get-all-books`);
         setData(response.data.data)
        };
         fetch()

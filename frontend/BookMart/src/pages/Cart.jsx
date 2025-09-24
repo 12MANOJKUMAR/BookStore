@@ -15,7 +15,7 @@ const Cart = () => {
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:1000/api/v1/cart", {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/cart`, {
         withCredentials: true,
       });
 
@@ -44,7 +44,7 @@ const Cart = () => {
 
     try {
       await axios.put(
-        `http://localhost:1000/api/v1/cart/${item.book._id}`,
+        `${process.env.REACT_APP_API_URL}/cart/${item.book._id}`,
         { qty: (item.qty || 1) + 1 },
         { withCredentials: true }
       );
@@ -69,7 +69,7 @@ const Cart = () => {
 
     try {
       await axios.put(
-        `http://localhost:1000/api/v1/cart/${item.book._id}`,
+        `${process.env.REACT_APP_API_URL}/cart/${item.book._id}`,
         { qty: item.qty - 1 },
         { withCredentials: true }
       );
@@ -93,7 +93,7 @@ const Cart = () => {
     if (!window.confirm("Remove this item from cart?")) return;
 
     try {
-      await axios.delete(`http://localhost:1000/api/v1/cart/${bookId}`, {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/cart/${bookId}`, {
         withCredentials: true,
       });
       // Update local state

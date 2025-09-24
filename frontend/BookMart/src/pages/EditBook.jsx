@@ -26,7 +26,7 @@ const EditBook = () => {
     }
     const fetchBook = async () => {
       try {
-        const res = await axios.get(`http://localhost:1000/api/v1/get-book/${id}`);
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/get-book/${id}`);
         const data = res.data?.data || {};
         setForm({
           url: data.url || "",
@@ -75,7 +75,7 @@ const EditBook = () => {
         language: form.language,
       };
       const res = await axios.put(
-        `http://localhost:1000/api/v1/update-book/${id}`,
+        `${process.env.REACT_APP_API_URL}/update-book/${id}`,
         payload,
         { withCredentials: true }
       );

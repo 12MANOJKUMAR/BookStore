@@ -17,7 +17,7 @@ const Profile = () => {
     const fetchUser = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:1000/api/v1/get-user-information",
+          `${process.env.REACT_APP_API_URL}/get-user-information`,
           { withCredentials: true }
         );
         

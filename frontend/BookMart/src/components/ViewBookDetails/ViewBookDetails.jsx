@@ -18,7 +18,7 @@ const ViewBookDetails = () => {
   
   
   const handleFavoriteClick = async() => {
-    const response = await axios.put('http://localhost:1000/api/v1/added-in-favourite', { bookId: id }, {
+    const response = await axios.put(`${process.env.REACT_APP_API_URL}/added-in-favourite`, { bookId: id }, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}` 
       }
@@ -41,7 +41,7 @@ const ViewBookDetails = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:1000/api/v1/cart",
+        `${process.env.REACT_APP_API_URL}/cart`,
         { bookId: id },
         { withCredentials: true }
       );
@@ -67,7 +67,7 @@ const ViewBookDetails = () => {
     if (confirmDelete) {
       try {
         // Add your delete API call here
-        await axios.delete(`http://localhost:1000/api/v1/delete-book/${id}`, { withCredentials: true });
+        await axios.delete(`${process.env.REACT_APP_API_URL}/delete-book/${id}`, { withCredentials: true });
         navigate('/all-books'); // Navigate to books list after deletion
       } catch (error) {
         console.error("Error deleting book:", error);
@@ -81,7 +81,7 @@ const ViewBookDetails = () => {
     const fetchBookDetails = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:1000/api/v1/get-book/${id}`
+          `${process.env.REACT_APP_API_URL}/get-book/${id}`
         );
         setData(response.data.data);
       } catch (error) {

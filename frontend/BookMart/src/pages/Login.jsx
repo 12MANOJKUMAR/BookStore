@@ -20,14 +20,14 @@ const Login = () => {
     e.preventDefault();
     try {
       const response = await axios.post(
-        "http://localhost:1000/api/v1/sign-in",
+        `${process.env.REACT_APP_API_URL}/sign-in`,
         formData,
         { withCredentials: true }
       );
 
       // Fetch user data after successful login
       const userResponse = await axios.get(
-        "http://localhost:1000/api/v1/get-user-information",
+        `${process.env.REACT_APP_API_URL}/get-user-information`,
         { withCredentials: true }
       );
 

@@ -30,7 +30,7 @@ const Setting = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        "http://localhost:1000/api/v1/get-user-information",
+        `${process.env.REACT_APP_API_URL}/get-user-information`,
         { withCredentials: true }
       );
       const userData = response.data;
@@ -73,7 +73,7 @@ const Setting = () => {
     };
 
     await axios.put(
-      "http://localhost:1000/api/v1/update-profile",
+      `${process.env.REACT_APP_API_URL}/update-profile`,
       updateData,
       { withCredentials: true }
     );
@@ -121,7 +121,7 @@ const Setting = () => {
 
     try {
       await axios.put(
-        "http://localhost:1000/api/v1/change-password",
+        `${process.env.REACT_APP_API_URL}/change-password`,
         {
           currentPassword: formData.currentPassword,
           newPassword: formData.newPassword
@@ -156,7 +156,7 @@ const Setting = () => {
     }
 
     try {
-      await axios.delete("http://localhost:1000/api/v1/delete-account", {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/delete-account`, {
         withCredentials: true
       });
       alert("Account deleted successfully. Redirecting to home...");
