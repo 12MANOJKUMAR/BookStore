@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import api from "../util/axios";
 
 const EditBook = () => {
   const { id } = useParams();
@@ -26,7 +26,7 @@ const EditBook = () => {
     }
     const fetchBook = async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/get-book/${id}`);
+        const res = await api.get(`/get-book/${id}`);
         const data = res.data?.data || {};
         setForm({
           url: data.url || "",
@@ -74,10 +74,9 @@ const EditBook = () => {
         desc: form.desc,
         language: form.language,
       };
-      const res = await axios.put(
-        `${process.env.REACT_APP_API_URL}/update-book/${id}`,
-        payload,
-        { withCredentials: true }
+      const res = await api.put(
+        `/update-book/${id}`,
+        payload
       );
       alert(res.data?.message || "Book updated successfully");
       navigate(`/book/${id}`);

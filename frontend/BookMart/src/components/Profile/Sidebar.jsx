@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Heart, Clock, Settings, LogOut, Camera, Upload } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { authActions } from "../../store/auth";
-import axios from "axios";
+import api from "../../util/axios";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -79,10 +79,9 @@ const Sidebar = () => {
         
         try {
           // Update profile with new avatar
-          await axios.put(
-            `${process.env.REACT_APP_API_URL}/update-profile`,
-            { avatar: base64Image },
-            { withCredentials: true }
+          await api.put(
+            `/update-profile`,
+            { avatar: base64Image }
           );
 
           // Update Redux state
@@ -114,10 +113,9 @@ const Sidebar = () => {
       setIsLoggingOut(true);
       
       // Call logout API to clear server-side session
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/logout`,
-        {},
-        { withCredentials: true }
+      await api.post(
+        `/logout`,
+        {}
       );
       
       // Clear Redux state

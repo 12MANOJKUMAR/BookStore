@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../util/axios";
 import BookCard from "../BookCard/BookCard";
 import Loader from "../Loader/Loader";
 
@@ -10,7 +10,7 @@ const RecentlyAdded = ()=>{
   useEffect(()=>{
     const fetch = async ()=>
        {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/recent-books`);
+        const response = await api.get(`/recent-books/`);
         setData(response.data.data)
        };
         fetch()

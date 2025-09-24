@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../util/axios";
 import Loader from "../Loader/Loader";
 import { GrLanguage } from "react-icons/gr";
 import { FaHeart, FaRegHeart, FaShoppingCart, FaEdit, FaTrash } from "react-icons/fa";
@@ -18,11 +18,7 @@ const ViewBookDetails = () => {
   
   
   const handleFavoriteClick = async() => {
-    const response = await axios.put(`${process.env.REACT_APP_API_URL}/added-in-favourite`, { bookId: id }, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}` 
-      }
-    });
+    const response = await api.put(`/added-in-favourite`, { bookId: id });
    alert(response.data.message);
   };
 
@@ -40,10 +36,9 @@ const ViewBookDetails = () => {
     }
 
     try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/cart`,
-        { bookId: id },
-        { withCredentials: true }
+      const response = await api.post(
+        `/cart`,
+        { bookId: id }
       );
       alert(response.data.message || "Book added to cart");
       // Dispatch cart update event
@@ -66,8 +61,7 @@ const ViewBookDetails = () => {
     const confirmDelete = window.confirm("Are you sure you want to delete this book?");
     if (confirmDelete) {
       try {
-        // Add your delete API call here
-        await axios.delete(`${process.env.REACT_APP_API_URL}/delete-book/${id}`, { withCredentials: true });
+        await api.delete(`/delete-book/${id}`);
         navigate('/all-books'); // Navigate to books list after deletion
       } catch (error) {
         console.error("Error deleting book:", error);
@@ -80,8 +74,8 @@ const ViewBookDetails = () => {
   useEffect(() => {
     const fetchBookDetails = async () => {
       try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/get-book/${id}`
+        const response = await api.get(
+          `/get-book/${id}`
         );
         setData(response.data.data);
       } catch (error) {

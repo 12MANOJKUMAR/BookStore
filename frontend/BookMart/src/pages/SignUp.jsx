@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../util/axios";
 import { Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +35,7 @@ const SignUp = () => {
   }
 
   try {
-    const response = await axios.post(`${process.env.REACT_APP_API_URL}/signup`, formData);
+    const response = await api.post(`/signup`, formData);
     alert("Signup successful!");
     navigate("/login"); // if you want redirect
   } catch (error) {

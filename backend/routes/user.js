@@ -44,7 +44,7 @@ router.post("/signup", async (req, res) => {
 router.post("/sign-in", async (req, res) => {
   try {
     const { username, password } = req.body;
-
+    console.log(username, password);
     const existingUser = await User.findOne({ username });
     if (!existingUser) return res.status(400).json({ message: "Invalid Credentials" });
 

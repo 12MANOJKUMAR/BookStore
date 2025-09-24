@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../util/axios";
 
 const AdminAddBook = () => {
   const [form, setForm] = useState({ url: "", title: "", author: "", price: "", desc: "", language: "" });
@@ -11,7 +11,7 @@ const AdminAddBook = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/add-book`, form, { withCredentials: true });
+      await api.post(`/add-book`, form);
       alert("Book added");
       setForm({ url: "", title: "", author: "", price: "", desc: "", language: "" });
     } catch (e) {

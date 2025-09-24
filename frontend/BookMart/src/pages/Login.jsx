@@ -1,10 +1,8 @@
 import { useState } from "react";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { authActions } from "../store/auth";
-
-axios.defaults.withCredentials = true;
+import api from "../util/axios"; // ✅ axios instance
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -19,19 +17,13 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/sign-in`,
-        formData,
-        { withCredentials: true }
-      );
+      // ✅ login request using axios instance
+      const response = await api.post("/sign-in", formData);
 
-      // Fetch user data after successful login
-      const userResponse = await axios.get(
-        `${process.env.REACT_APP_API_URL}/get-user-information`,
-        { withCredentials: true }
-      );
+      // ✅ fetch user data using axios instance (no hardcoded URL now)
+      const userResponse = await api.get("/get-user-information");
 
-      // ✅ update redux state with user data
+      // update redux state with user data
       dispatch(authActions.setUser(userResponse.data));
       dispatch(authActions.login());
       dispatch(authActions.changeRole(response.data.role));

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../util/axios";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Loader from "../Loader/Loader";
 
@@ -10,9 +10,8 @@ const AdminAllOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/get-all-history`,
-        { withCredentials: true }
+      const res = await api.get(
+        `/get-all-history`
       );
       setOrders(res.data.data || []);
     } catch (e) {
@@ -29,10 +28,9 @@ const AdminAllOrders = () => {
 
   const updateStatus = async (orderId, status) => {
     try {
-      await axios.put(
-        `${process.env.REACT_APP_API_URL}/update-status/${orderId}`,
-        { status },
-        { withCredentials: true }
+      await api.put(
+        `/update-status/${orderId}`,
+        { status }
       );
       fetchOrders();
     } catch (e) {

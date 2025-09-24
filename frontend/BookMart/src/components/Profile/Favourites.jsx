@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
-import axios from "axios";
+import api from "../../util/axios";
 import BookCard from "../BookCard/BookCard";
 
 const Favourites = () => {
@@ -10,13 +10,8 @@ const Favourites = () => {
     // Fetch favourite books logic here
     const fetchFavourites = async () => {
       try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/favourites`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
+        const response = await api.get(
+          `/favourites`
         );
         setFavourites(response.data.data);
       } catch (error) {
@@ -30,14 +25,9 @@ const Favourites = () => {
   // ✅ remove from favourites and update UI
   const handleRemove = async (bookId) => {
     try {
-      const response = await axios.put(
-        `${process.env.REACT_APP_API_URL}/remove-from-favourite`,
-        { bookId },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
+      const response = await api.put(
+        `/remove-from-favourite`,
+        { bookId }
       );
 
       alert(response.data.message);

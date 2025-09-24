@@ -1,7 +1,7 @@
 
 // src/components/Profile/UserOrderHistory.jsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../util/axios";
 import { useLocation } from "react-router-dom";
 
 const UserOrderHistory = () => {
@@ -44,9 +44,7 @@ const UserOrderHistory = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/orders`, {
-        withCredentials: true
-      });
+      const response = await api.get(`/orders`);
       setOrders(response.data.orders || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -63,9 +61,7 @@ const UserOrderHistory = () => {
 
     try {
       setClearing(true);
-      await axios.delete(`${process.env.REACT_APP_API_URL}/clear-history`, {
-        withCredentials: true
-      });
+      await api.delete(`/clear-history`);
       
       setOrders([]);
       alert("Order history cleared successfully!");

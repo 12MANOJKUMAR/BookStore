@@ -1,7 +1,7 @@
 // src/pages/Payment.jsx
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../util/axios";
 
 const Payment = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -30,9 +30,7 @@ const Payment = () => {
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/cart`, {
-        withCredentials: true
-      });
+      const response = await api.get(`/cart`);
       
       const validCartItems = (response.data.cart || []).filter(item => {
         if (!item || !item.book) {
@@ -119,16 +117,12 @@ const Payment = () => {
       }));
 
       // Create order
-      const orderResponse = await axios.post("http://localhost:1000/api/v1/order", {
+      const orderResponse = await api.post(`/order`, {
         order: orderItems
-      }, {
-        withCredentials: true
       });
       
       // Clear cart after successful payment
-      await axios.delete("http://localhost:1000/api/v1/cart/clear", {
-        withCredentials: true
-      });
+      await api.delete(`/cart/clear`);
       
       // Dispatch order update event
       window.dispatchEvent(new CustomEvent('orderUpdated'));

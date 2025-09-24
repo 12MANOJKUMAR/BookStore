@@ -1,6 +1,6 @@
 // src/components/Profile/Setting.jsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../util/axios";
 import { useDispatch } from "react-redux";
 import { authActions } from "../../store/auth";
 
@@ -29,9 +29,8 @@ const Setting = () => {
   const fetchUserData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/get-user-information`,
-        { withCredentials: true }
+      const response = await api.get(
+        `/get-user-information`
       );
       const userData = response.data;
 
@@ -72,10 +71,9 @@ const Setting = () => {
       avatar: formData.avatar
     };
 
-    await axios.put(
-      `${process.env.REACT_APP_API_URL}/update-profile`,
-      updateData,
-      { withCredentials: true }
+    await api.put(
+      `/update-profile`,
+      updateData
     );
 
     setSuccess("Profile updated successfully!");
@@ -120,13 +118,12 @@ const Setting = () => {
     }
 
     try {
-      await axios.put(
-        `${process.env.REACT_APP_API_URL}/change-password`,
+      await api.put(
+        `/change-password`,
         {
           currentPassword: formData.currentPassword,
           newPassword: formData.newPassword
-        },
-        { withCredentials: true }
+        }
       );
 
       setSuccess("Password changed successfully!");
@@ -156,9 +153,7 @@ const Setting = () => {
     }
 
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/delete-account`, {
-        withCredentials: true
-      });
+      await api.delete(`/delete-account`);
       alert("Account deleted successfully. Redirecting to home...");
       window.location.href = "/";
     } catch (error) {

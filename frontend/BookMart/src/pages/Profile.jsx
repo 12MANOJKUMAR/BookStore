@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../util/axios";
 import Loader from "../components/Loader/Loader";
 import Sidebar from "../components/Profile/Sidebar";
 import { Outlet } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { authActions } from "../store/auth";
 
-axios.defaults.withCredentials = true;
+// withCredentials is already handled in api instance
 
 const Profile = () => {
   const [message, setMessage] = useState("");
@@ -16,10 +16,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/get-user-information`,
-          { withCredentials: true }
-        );
+        const response = await api.get(`/get-user-information`);
         
         // ✅ update redux state with user data
         dispatch(authActions.setUser(response.data));

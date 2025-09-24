@@ -1,7 +1,7 @@
 import {Link} from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { FaShoppingCart } from 'react-icons/fa';
-import axios from 'axios';
+import api from '../../util/axios';
 
 const BookCard = ({ data, favourites, onRemove, showAddToCart = false, showRemoveFromCart = false, onRemoveFromCart }) => {
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
@@ -21,10 +21,9 @@ const BookCard = ({ data, favourites, onRemove, showAddToCart = false, showRemov
     }
 
     try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/cart`,
-        { bookId: data._id },
-        { withCredentials: true }
+      const response = await api.post(
+        `/cart`,
+        { bookId: data._id }
       );
       alert(response.data.message || "Book added to cart");
       // Dispatch cart update event

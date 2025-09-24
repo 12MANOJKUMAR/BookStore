@@ -3,7 +3,7 @@ import logo from "../../assets/bookmart-logo.png";
 import { FaGripLines, FaShoppingCart } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import api from "../../util/axios";
 
 const Navbar = () => {
   const links = [
@@ -29,9 +29,7 @@ const Navbar = () => {
 
   const fetchCartCount = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/cart`, {
-        withCredentials: true
-      });
+      const response = await api.get(`/cart`);
       const cartItems = response.data.cart || [];
       const count = cartItems.reduce((total, item) => total + (item.qty || 1), 0);
       setCartCount(count);

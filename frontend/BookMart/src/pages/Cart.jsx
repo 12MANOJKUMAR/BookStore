@@ -1,7 +1,7 @@
 // src/pages/Cart.jsx
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../util/axios";
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -15,9 +15,7 @@ const Cart = () => {
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/cart`, {
-        withCredentials: true,
-      });
+      const response = await api.get(`/cart`);
 
       // Filter out invalid items and ensure book is populated
       const validCartItems = (response.data.cart || []).filter((item) => {
@@ -43,10 +41,9 @@ const Cart = () => {
     }
 
     try {
-      await axios.put(
-        `${process.env.REACT_APP_API_URL}/cart/${item.book._id}`,
-        { qty: (item.qty || 1) + 1 },
-        { withCredentials: true }
+      await api.put(
+        `/cart/${item.book._id}`,
+        { qty: (item.qty || 1) + 1 }
       );
       // Update local state
       setCartItems((prev) =>
@@ -68,10 +65,9 @@ const Cart = () => {
     if (!item || !item.book || !item.book._id || item.qty <= 1) return;
 
     try {
-      await axios.put(
-        `${process.env.REACT_APP_API_URL}/cart/${item.book._id}`,
-        { qty: item.qty - 1 },
-        { withCredentials: true }
+      await api.put(
+        `/cart/${item.book._id}`,
+        { qty: item.qty - 1 }
       );
       // Update local state
       setCartItems((prev) =>
@@ -93,9 +89,7 @@ const Cart = () => {
     if (!window.confirm("Remove this item from cart?")) return;
 
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/cart/${bookId}`, {
-        withCredentials: true,
-      });
+      await api.delete(`/cart/${bookId}`);
       // Update local state
       setCartItems((prev) => prev.filter((item) => item.book._id !== bookId));
       alert("Item removed from cart");

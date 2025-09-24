@@ -12,7 +12,7 @@ import ViewBookDetails from './components/ViewBookDetails/ViewBookDetails';
 import { useDispatch, useSelector } from 'react-redux'
 import { authActions } from './store/auth'
 import { useEffect,useState } from 'react'
-import axios from 'axios'
+import api from './util/axios'
 import Loader from './components/Loader/Loader'
 import Favourites from './components/Profile/Favourites'
 import UserOrderHistory from './components/Profile/UserOrderHistory'
@@ -29,9 +29,7 @@ const App = ()=>{
   useEffect(()=>{
    const checkAuth = async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/get-user-information`, {
-          withCredentials: true,
-        });
+        const res = await api.get(`/get-user-information`);
         dispatch(authActions.login());
         dispatch(authActions.changeRole(res.data.role));
       } catch (err) {
