@@ -2,15 +2,15 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
-require("./conn/conn");
+require("./conn/conn"); // MongoDB connection
 
 const app = express();
 
 // ✅ Allowed Origins
 const allowedOrigins = [
-  "http://localhost:5173",                  // Dev frontend
-  "https://book-store-two-sage.vercel.app", // Prod frontend
-  process.env.FRONTEND_URL                  // Fallback from env
+  "http://localhost:5173",
+  "https://book-store-two-sage.vercel.app",
+  process.env.FRONTEND_URL
 ];
 
 // ✅ Middleware
@@ -24,23 +24,24 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ Routes
-const User = require("../routes/user");
-const Books = require("../routes/book");
-const Favourite = require("../routes/favourite");
-const Cart = require("../routes/cart");
-const Order = require("../routes/order");
+// ✅ Routes (fixed paths)
+const User = require("./routes/user");
+const Books = require("./routes/book");
+const Favourite = require("./routes/favourite");
+const Cart = require("./routes/cart");
+const Order = require("./routes/order");
 
+// ✅ Test route
 app.get('/', (req, res) => {
-  res.send('Hello World')
+  res.send('backend is running')
 })
 
+// ✅ Use routes
 app.use("/api/v1", User);
 app.use("/api/v1", Books);
 app.use("/api/v1", Favourite);
 app.use("/api/v1", Cart);
 app.use("/api/v1", Order);
 
-// ❌ No app.listen() in Vercel
-// ✅ Export app
+
 module.exports = app;
