@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://bookstore-uoyi.onrender.com/api/v1",
+  baseURL: "https://book-store-exv9.vercel.app/api/v1",
   withCredentials: true, // ✅ send HttpOnly cookie automatically
 });
 
