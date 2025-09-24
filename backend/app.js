@@ -31,6 +31,10 @@ const Favourite = require("../routes/favourite");
 const Cart = require("../routes/cart");
 const Order = require("../routes/order");
 
+app.get('/', (req, res) => {
+  res.send('Hello World')
+})
+
 app.use("/api/v1", User);
 app.use("/api/v1", Books);
 app.use("/api/v1", Favourite);
