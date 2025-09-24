@@ -8,9 +8,9 @@ const app = express();
 
 // ✅ Allowed Origins
 const allowedOrigins = [
-  "http://localhost:5173",
-  "https://book-store-two-sage.vercel.app",
-  process.env.FRONTEND_URL
+  "http://localhost:5173",                 // Dev frontend
+  "https://book-store-two-sage.vercel.app", // Prod frontend
+  process.env.FRONTEND_URL                 // fallback
 ];
 
 // ✅ Middleware
@@ -24,7 +24,7 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ Routes (fixed paths)
+// ✅ Routes
 const User = require("./routes/user");
 const Books = require("./routes/book");
 const Favourite = require("./routes/favourite");
@@ -32,9 +32,9 @@ const Cart = require("./routes/cart");
 const Order = require("./routes/order");
 
 // ✅ Test route
-app.get('/', (req, res) => {
-  res.send('backend is running')
-})
+app.get("/", (req, res) => {
+  res.send("Backend is running!");
+});
 
 // ✅ Use routes
 app.use("/api/v1", User);
@@ -43,5 +43,8 @@ app.use("/api/v1", Favourite);
 app.use("/api/v1", Cart);
 app.use("/api/v1", Order);
 
-
-module.exports = app;
+// ✅ Server: Render provides PORT via env variable
+const PORT = process.env.PORT || 1000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
+});
