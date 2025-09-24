@@ -29,7 +29,7 @@ const App = ()=>{
   useEffect(()=>{
    const checkAuth = async () => {
       try {
-        const res = await axios.get('http://localhost:1000/api/v1/get-user-information', {
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/get-user-information`, {
           withCredentials: true,
         });
         dispatch(authActions.login());
