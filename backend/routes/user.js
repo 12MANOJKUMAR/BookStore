@@ -44,7 +44,6 @@ router.post("/signup", async (req, res) => {
 router.post("/sign-in", async (req, res) => {
   try {
     const { username, password } = req.body;
-    console.log(username, password);
     const existingUser = await User.findOne({ username });
     if (!existingUser) return res.status(400).json({ message: "Invalid Credentials" });
 
@@ -61,12 +60,11 @@ router.post("/sign-in", async (req, res) => {
       expiresIn: process.env.TIME || "7d",
     });
 
-    // ✅ set cookie
     res.cookie("accessToken", token, {
       httpOnly: true,
-      secure: false,        // set to false for development (http)
-      sameSite: "Lax",      // changed from Strict to Lax for better compatibility
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({
@@ -75,9 +73,11 @@ router.post("/sign-in", async (req, res) => {
       message: "Login successful",
     });
   } catch (error) {
+    console.error("Sign-in error:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
 
 // get-user-information
 router.get("/get-user-information", AuthenticateToken, async (req, res) => {
