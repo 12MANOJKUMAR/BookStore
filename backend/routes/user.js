@@ -197,8 +197,10 @@ router.delete("/delete-account", AuthenticateToken, async (req, res) => {
 router.post("/logout", (req, res) => {
   res.clearCookie("accessToken", {
     httpOnly: true,
-    secure: false,
-    sameSite: "Lax",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    path: "/",
+    domain: process.env.NODE_ENV === "production" ? ".vercel.app" : undefined,
   });
   return res.status(200).json({ message: "Logged out successfully" });
 });

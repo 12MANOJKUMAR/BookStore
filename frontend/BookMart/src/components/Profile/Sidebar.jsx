@@ -124,6 +124,9 @@ const Sidebar = () => {
       // Clear any local storage items
       localStorage.removeItem('token');
       
+      // Dispatch custom logout event to prevent auto-login
+      window.dispatchEvent(new CustomEvent('userLoggedOut'));
+      
       // Navigate to home page
       navigate("/");
       
@@ -133,6 +136,10 @@ const Sidebar = () => {
       // Even if API call fails, still clear local state
       dispatch(authActions.logout());
       localStorage.removeItem('token');
+      
+      // Dispatch custom logout event to prevent auto-login
+      window.dispatchEvent(new CustomEvent('userLoggedOut'));
+      
       navigate("/");
       
       // Show error message (optional)

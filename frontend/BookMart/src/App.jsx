@@ -25,9 +25,18 @@ import EditBook from './pages/EditBook'
 const App = ()=>{
   const dispatch = useDispatch();
   const role = useSelector((state)=>state.auth.role);
+  const isLoggedIn = useSelector((state)=>state.auth.isLoggedIn);
   const [authChecked, setAuthChecked] = useState(false);
+  const [hasLoggedOut, setHasLoggedOut] = useState(false);
+
   useEffect(()=>{
    const checkAuth = async () => {
+      // Skip auth check if user has just logged out
+      if (hasLoggedOut) {
+        setAuthChecked(true);
+        return;
+      }
+
       try {
         const res = await api.get(`/get-user-information`);
         dispatch(authActions.login());
@@ -39,7 +48,28 @@ const App = ()=>{
       }
     };
     checkAuth();
-  }, [dispatch]);
+  }, [dispatch, hasLoggedOut]);
+
+  // Listen for logout events
+  useEffect(() => {
+    const handleLogout = () => {
+      setHasLoggedOut(true);
+    };
+
+    // Listen for custom logout event
+    window.addEventListener('userLoggedOut', handleLogout);
+    
+    return () => {
+      window.removeEventListener('userLoggedOut', handleLogout);
+    };
+  }, []);
+
+  // Reset logout flag when user successfully logs in
+  useEffect(() => {
+    if (isLoggedIn && hasLoggedOut) {
+      setHasLoggedOut(false);
+    }
+  }, [isLoggedIn, hasLoggedOut]);
 
   if (!authChecked) {
     return (
