@@ -122,6 +122,7 @@ const Sidebar = () => {
       dispatch(authActions.logout());
       
       // Clear any local storage items
+      localStorage.removeItem('userId');
       localStorage.removeItem('token');
       
       // Dispatch custom logout event to prevent auto-login
@@ -135,6 +136,7 @@ const Sidebar = () => {
       
       // Even if API call fails, still clear local state
       dispatch(authActions.logout());
+      localStorage.removeItem('userId');
       localStorage.removeItem('token');
       
       // Dispatch custom logout event to prevent auto-login

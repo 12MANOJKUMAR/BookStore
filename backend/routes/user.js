@@ -179,11 +179,13 @@ router.delete("/delete-account", AuthenticateToken, async (req, res) => {
     // Delete user and all associated data
     await User.findByIdAndDelete(userId);
     
-    // Clear the cookie
+    // Clear the cookie (match options used when setting the cookie)
     res.clearCookie("accessToken", {
       httpOnly: true,
-      secure: false,
-      sameSite: "Lax",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      path: "/",
+      // Do NOT set domain here; let it default to the current host so it matches the cookie that was set
     });
 
     return res.status(200).json({ message: "Account deleted successfully" });
@@ -200,7 +202,7 @@ router.post("/logout", (req, res) => {
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
-    domain: process.env.NODE_ENV === "production" ? ".vercel.app" : undefined,
+    // Do NOT set domain; default to current host so it matches the cookie scope used on login
   });
   return res.status(200).json({ message: "Logged out successfully" });
 });
