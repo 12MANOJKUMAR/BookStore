@@ -4,6 +4,32 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { AuthenticateToken } = require("./userAuth");
 
+// ✅ Centralized cookie configuration to ensure exact matching
+const getCookieOptions = () => {
+  // Check if we're using HTTPS (production-like) based on environment or URLs
+  const isHTTPS = process.env.NODE_ENV === "production" || 
+                  process.env.FRONTEND_URL?.startsWith("https://") ||
+                  process.env.BACKEND_URL?.startsWith("https://");
+  
+  const options = {
+    httpOnly: true,
+    secure: isHTTPS, // Use secure cookies for HTTPS
+    sameSite: isHTTPS ? "None" : "Lax", // None for cross-site HTTPS, Lax for local
+    path: "/",
+    domain: cookieDomain, // ✅ Explicit domain
+  };
+  
+  // Log environment detection for debugging
+  console.log("🔧 Environment detection:", {
+    NODE_ENV: process.env.NODE_ENV,
+    FRONTEND_URL: process.env.FRONTEND_URL,
+    isHTTPS,
+    cookieOptions: options
+  });
+  
+  return options;
+};
+
 // signup
 router.post("/signup", async (req, res) => {
   try {
@@ -60,11 +86,12 @@ router.post("/sign-in", async (req, res) => {
       expiresIn: process.env.TIME || "7d",
     });
 
+    const cookieOptions = getCookieOptions();
+    console.log("🍪 Setting login cookie with options:", { ...cookieOptions, maxAge: "7 days" });
+    
     res.cookie("accessToken", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     return res.status(200).json({
@@ -179,11 +206,13 @@ router.delete("/delete-account", AuthenticateToken, async (req, res) => {
     // Delete user and all associated data
     await User.findByIdAndDelete(userId);
     
-    // Clear the cookie
-    res.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: false,
-      sameSite: "Lax",
+    // ✅ Clear cookie with exact same options as when set
+    const cookieOptions = getCookieOptions();
+    res.clearCookie("accessToken", cookieOptions);
+    res.cookie("accessToken", "", {
+      ...cookieOptions,
+      expires: new Date(0),
+      maxAge: 0
     });
 
     return res.status(200).json({ message: "Account deleted successfully" });
@@ -193,14 +222,39 @@ router.delete("/delete-account", AuthenticateToken, async (req, res) => {
   }
 });
 
-// logout
 router.post("/logout", (req, res) => {
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: false,
-    sameSite: "Lax",
-  });
-  return res.status(200).json({ message: "Logged out successfully" });
-});
+  try {
+    console.log("🔓 Logout request received. Cookies:", req.cookies);
+    
+    const cookieOptions = getCookieOptions();
+    console.log("Clearing with options:", cookieOptions);
+    
+    // Method 1: clearCookie
+    res.clearCookie("accessToken", cookieOptions);
+    
+    // Method 2: Expired cookie
+    res.cookie("accessToken", "", {
+      ...cookieOptions,
+      expires: new Date(0),
+      maxAge: 0
+    });
+    
+    // Method 3: Manual Set-Cookie for Vercel reliability
+    res.setHeader('Set-Cookie', `accessToken=; Path=/; HttpOnly; Secure; SameSite=None; Domain=${cookieOptions.domain}; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0`);
+    
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
+    console.log("🔓 Logout completed");
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("❌ Logout error:", error);
+    return res.status(500).json({ message: "Logout failed" });
+  }
+});;
+
 
 module.exports = router;

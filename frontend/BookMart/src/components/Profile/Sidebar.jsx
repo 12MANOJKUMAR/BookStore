@@ -14,92 +14,86 @@ const Sidebar = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
-  
+
   let menuItems = [
-    { 
-      path: "/profile", 
-      label: "Favourites", 
+    {
+      path: "/profile",
+      label: "Favourites",
       icon: Heart,
-      gradient: "from-pink-600 to-rose-600"
+      gradient: "from-pink-600 to-rose-600",
     },
-    { 
-      path: "/profile/orderHistory", 
-      label: "Order History", 
+    {
+      path: "/profile/orderHistory",
+      label: "Order History",
       icon: Clock,
-      gradient: "from-blue-600 to-indigo-600"
+      gradient: "from-blue-600 to-indigo-600",
     },
-    { 
-      path: "/profile/settings", 
-      label: "Settings", 
+    {
+      path: "/profile/settings",
+      label: "Settings",
       icon: Settings,
-      gradient: "from-purple-600 to-violet-600"
+      gradient: "from-purple-600 to-violet-600",
     },
   ];
 
-  if (role === 'admin') {
+  if (role === "admin") {
     // Remove Favourites and Order History for admin role
-    menuItems = menuItems.filter(item => item.label !== 'Favourites' && item.label !== 'Order History');
+    menuItems = menuItems.filter(
+      (item) => item.label !== "Favourites" && item.label !== "Order History"
+    );
     menuItems.unshift({
       path: "/profile/admin/add-book",
       label: "Add Book",
       icon: Upload,
-      gradient: "from-emerald-600 to-teal-600"
+      gradient: "from-emerald-600 to-teal-600",
     });
     menuItems.unshift({
       path: "/profile/admin/orders",
       label: "All Orders",
       icon: Clock,
-      gradient: "from-amber-600 to-orange-600"
+      gradient: "from-amber-600 to-orange-600",
     });
   }
 
+  // ✅ Clean async/await version
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file');
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
+      alert("Image size should be less than 5MB");
       return;
     }
 
     try {
       setIsUploading(true);
-      
-      // Convert image to base64
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64Image = e.target.result;
-        
-        try {
-          // Update profile with new avatar
-          await api.put(
-            `/update-profile`,
-            { avatar: base64Image }
-          );
 
-          // Update Redux state
-          dispatch(authActions.updateUser({ avatar: base64Image }));
-          
-          alert('Profile picture updated successfully!');
-        } catch (error) {
-          console.error("Error updating avatar:", error);
-          alert('Failed to update profile picture');
-        } finally {
-          setIsUploading(false);
-        }
-      };
-      
-      reader.readAsDataURL(file);
+      // Convert image to base64
+      const base64Image = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+      });
+
+      // Update profile with new avatar
+      await api.put(`/update-profile`, { avatar: base64Image });
+
+      // Update Redux state immediately
+      dispatch(authActions.updateUser({ avatar: base64Image }));
+
+      alert("Profile picture updated successfully!");
     } catch (error) {
-      console.error("Error processing image:", error);
-      alert('Failed to process image');
+      console.error("Error updating avatar:", error);
+      alert("Failed to update profile picture");
+    } finally {
       setIsUploading(false);
     }
   };
@@ -107,51 +101,40 @@ const Sidebar = () => {
   const handleImageClick = () => {
     fileInputRef.current?.click();
   };
+const handleLogout = async () => {
+  try {
+    setIsLoggingOut(true);
+    dispatch(authActions.setLoggingOut(true));
 
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      
-      // Call logout API to clear server-side session
-      await api.post(
-        `/logout`,
-        {}
-      );
-      
-      // Clear Redux state
-      dispatch(authActions.logout());
-      
-      // Clear any local storage items
-      localStorage.removeItem('token');
-      
-      // Navigate to home page
-      navigate("/");
-      
-    } catch (error) {
-      console.error("Logout error:", error);
-      
-      // Even if API call fails, still clear local state
-      dispatch(authActions.logout());
-      localStorage.removeItem('token');
-      navigate("/");
-      
-      // Show error message (optional)
-      alert("Logout completed (some server cleanup may have failed)");
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
+    await api.post("/logout"); // server clears HTTP-only cookie
+
+    // update redux state
+    dispatch(authActions.logout()); // sets lastLogoutTime = Date.now()
+
+    navigate("/"); // go to home or login page
+  } catch (err) {
+    console.error(err);
+    dispatch(authActions.logout());
+    navigate("/");
+  } finally {
+    setIsLoggingOut(false);
+  }
+};
+
 
   return (
     <div className="sidebar bg-gradient-to-b from-zinc-900 to-zinc-800 p-6 rounded-xl shadow-2xl flex flex-col h-full">
       {/* Profile Section */}
       <div className="flex flex-col items-center">
-        <div className="relative group cursor-pointer" onClick={handleImageClick}>
+        <div
+          className="relative group cursor-pointer"
+          onClick={handleImageClick}
+        >
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full blur-lg opacity-75 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="relative h-24 w-24 rounded-full border-4 border-zinc-700 group-hover:border-emerald-600/50 transition-all duration-300 overflow-hidden">
             {user?.avatar ? (
               <img
-                src={user.avatar}
+                src={`${user.avatar}?t=${Date.now()}`} // ✅ cache-busting
                 alt="profile-pic"
                 className="h-full w-full object-cover"
               />
@@ -161,7 +144,7 @@ const Sidebar = () => {
               </div>
             )}
           </div>
-          
+
           {/* Upload overlay */}
           <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             {isUploading ? (
@@ -171,7 +154,7 @@ const Sidebar = () => {
             )}
           </div>
         </div>
-        
+
         {/* Hidden file input */}
         <input
           ref={fileInputRef}
@@ -180,12 +163,14 @@ const Sidebar = () => {
           onChange={handleImageUpload}
           className="hidden"
         />
-        
+
         <h3 className="text-zinc-100 mt-4 text-xl font-bold tracking-wide">
           {user?.username || "Loading..."}
         </h3>
-        <p className="text-zinc-400 text-sm mt-1">{user?.email || "Loading..."}</p>
-        
+        <p className="text-zinc-400 text-sm mt-1">
+          {user?.email || "Loading..."}
+        </p>
+
         {/* Upload button */}
         <button
           onClick={handleImageClick}
@@ -204,7 +189,7 @@ const Sidebar = () => {
             </>
           )}
         </button>
-        
+
         <div className="w-full mt-6 h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent"></div>
       </div>
 
@@ -220,17 +205,21 @@ const Sidebar = () => {
                   className="relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group overflow-hidden text-zinc-300 hover:text-white"
                 >
                   {/* Gradient Background - Only shows on hover */}
-                  <div className={`
+                  <div
+                    className={`
                     absolute inset-0 bg-gradient-to-r ${item.gradient}
                     transition-all duration-300 opacity-0 group-hover:opacity-100
-                  `}></div>
-                  
+                  `}
+                  ></div>
+
                   {/* Content */}
-                  <Icon 
-                    size={20} 
+                  <Icon
+                    size={20}
                     className="relative z-10 transition-transform duration-300 group-hover:scale-110"
                   />
-                  <span className="relative z-10 font-medium">{item.label}</span>
+                  <span className="relative z-10 font-medium">
+                    {item.label}
+                  </span>
                 </Link>
               </li>
             );
@@ -240,7 +229,7 @@ const Sidebar = () => {
 
       {/* Logout Button */}
       <div className="mt-auto pt-6">
-        <button 
+        <button
           onClick={handleLogout}
           disabled={isLoggingOut}
           className="

@@ -5,7 +5,7 @@ node_modulas
 # macOS specific file
 *.log
 # Ignore log files
-*.env
+# *.env
 # Ignore environment variable files
 *.tmp
 # Ignore temporary files

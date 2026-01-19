@@ -10,8 +10,11 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "https://book-store-two-sage.vercel.app",
+  // "https://reader-paradise.netlify.app",
   process.env.FRONTEND_URL
-];
+].filter(Boolean); // Remove any undefined values
+
+console.log("🌐 CORS Allowed Origins:", allowedOrigins);
 
 // ✅ Middleware
 app.use(
