@@ -1,23 +1,31 @@
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/bookmart-logo.png";
 import { FaGripLines, FaShoppingCart } from "react-icons/fa";
+import { LayoutDashboard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import api from "../../util/axios";
 
 const Navbar = () => {
-  const links = [
-    { title: "Home", link: "/" },
-    { title: "All Books", link: "/all-books" },
-    { title: "Cart", link: "/cart" },
-    { title: "Profile", link: "/profile" },
-  ];
-
   const [open, setOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
   const user = useSelector((state) => state.auth.user);
+  const role = useSelector((state) => state.auth.role);
   const navigate = useNavigate();
+  
+  const isAdmin = role === "admin";
+  
+  // Dynamic links based on role
+  const links = [
+    { title: "Home", link: "/" },
+    { title: "All Books", link: "/all-books" },
+    // Show Dashboard for admin, Cart for users
+    isAdmin 
+      ? { title: "Dashboard", link: "/profile", icon: "dashboard" }
+      : { title: "Cart", link: "/cart", icon: "cart" },
+    { title: "Profile", link: "/profile" },
+  ];
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -80,7 +88,7 @@ const Navbar = () => {
                 key={i}
                 className="hover:text-blue-400 transition-all duration-300 flex items-center gap-1 text-sm sm:text-base"
               >
-                {item.title === "Cart" ? (
+                {item.icon === "cart" ? (
                   <>
                     <FaShoppingCart className="text-base sm:text-lg" />
                     {item.title}
@@ -89,6 +97,11 @@ const Navbar = () => {
                         {cartCount}
                       </span>
                     )}
+                  </>
+                ) : item.icon === "dashboard" ? (
+                  <>
+                    <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5" />
+                    {item.title}
                   </>
                 ) : (
                   item.title
@@ -101,14 +114,14 @@ const Navbar = () => {
           {!isLoggedIn && (
             <>
               <Link
-                to={"/login"}
-                className="px-3 sm:px-4 py-1 border border-blue-500 rounded transition-all duration-300 hover:bg-amber-50 hover:text-zinc-700 text-sm sm:text-base"
+                to={"/auth"}
+                className="px-3 sm:px-4 py-1.5 border border-blue-500 rounded transition-all duration-300 hover:bg-blue-500 hover:text-white text-sm sm:text-base"
               >
                 SignIn
               </Link>
               <Link
-                to={"/signup"}
-                className="px-3 sm:px-4 py-1 bg-blue-500 rounded transition-all duration-300 hover:bg-amber-50 text-zinc-200 hover:text-zinc-700 text-sm sm:text-base"
+                to={"/auth"}
+                className="px-3 sm:px-4 py-1.5 bg-blue-500 rounded transition-all duration-300 hover:bg-blue-600 text-white text-sm sm:text-base"
               >
                 SignUp
               </Link>
@@ -165,7 +178,7 @@ const Navbar = () => {
               className="hover:text-blue-500 mb-6 text-white text-2xl sm:text-3xl font-semibold transition-all duration-300 flex items-center gap-2"
               onClick={() => setOpen(false)}
             >
-              {item.title === "Cart" ? (
+              {item.icon === "cart" ? (
                 <>
                   <FaShoppingCart className="text-2xl sm:text-3xl" />
                   {item.title}
@@ -174,6 +187,11 @@ const Navbar = () => {
                       {cartCount}
                     </span>
                   )}
+                </>
+              ) : item.icon === "dashboard" ? (
+                <>
+                  <LayoutDashboard className="w-7 h-7 sm:w-8 sm:h-8" />
+                  {item.title}
                 </>
               ) : (
                 item.title
@@ -186,15 +204,15 @@ const Navbar = () => {
         {!isLoggedIn && (
           <>
             <Link
-              to={"/login"}
-              className="px-4 py-1 border border-blue-500 rounded transition-all duration-300 hover:bg-amber-50 hover:text-zinc-700 mb-4 text-zinc-200"
+              to={"/auth"}
+              className="px-6 py-2 border border-blue-500 rounded transition-all duration-300 hover:bg-blue-500 hover:text-white mb-4 text-zinc-200 text-lg"
               onClick={() => setOpen(false)}
             >
               SignIn
             </Link>
             <Link
-              to={"/signup"}
-              className="px-4 py-1 bg-blue-500 rounded transition-all duration-300 hover:bg-amber-50 text-zinc-200 hover:text-zinc-700"
+              to={"/auth"}
+              className="px-6 py-2 bg-blue-500 rounded transition-all duration-300 hover:bg-blue-600 text-white text-lg"
               onClick={() => setOpen(false)}
             >
               SignUp

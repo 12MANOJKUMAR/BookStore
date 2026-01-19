@@ -1,12 +1,30 @@
 import axios from "axios";
 
-// Prefer environment variable, fallback to Vercel production API
-const baseURL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "https://book-store-exv9.vercel.app/api/v1";
+// Determine base URL: use env variable, or fallback based on environment
+const getBaseURL = () => {
+  // Check for environment variables first
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Fallback: localhost for dev, vercel for prod
+  if (import.meta.env.DEV) {
+    return "http://localhost:5000/api/v1";
+  }
+  
+  return "https://book-store-exv9.vercel.app/api/v1";
+};
+
+const baseURL = getBaseURL();
 
 console.log("🌐 Frontend API Configuration:", {
   VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
   VITE_API_URL: import.meta.env.VITE_API_URL,
   finalBaseURL: baseURL,
+  isDev: import.meta.env.DEV,
   isProd: import.meta.env.PROD
 });
 

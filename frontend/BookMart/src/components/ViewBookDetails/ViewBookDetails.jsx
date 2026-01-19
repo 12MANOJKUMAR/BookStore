@@ -6,6 +6,7 @@ import { GrLanguage } from "react-icons/gr";
 import { FaHeart, FaRegHeart, FaShoppingCart, FaEdit, FaTrash } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 const ViewBookDetails = () => {
   const { id } = useParams();
   const [Data, setData] = useState(null);
@@ -18,20 +19,25 @@ const ViewBookDetails = () => {
   
   
   const handleFavoriteClick = async() => {
-    const response = await api.put(`/added-in-favourite`, { bookId: id });
-   alert(response.data.message);
+    try {
+      const response = await api.put(`/added-in-favourite`, { bookId: id });
+      toast.success(response.data.message || "Added to favourites!");
+    } catch (error) {
+      console.error("Error adding to favourites:", error);
+      toast.error(error.response?.data?.message || "Failed to add to favourites");
+    }
   };
 
 
 
   const handleAddToCart = async () => {
     if (!isLoggedIn) {
-      alert('Please login to add items to cart');
+      toast.warning('Please login to add items to cart');
       return;
     }
 
     if (!id || !Data) {
-      alert('Invalid book data');
+      toast.error('Invalid book data');
       return;
     }
 
@@ -40,13 +46,13 @@ const ViewBookDetails = () => {
         `/cart`,
         { bookId: id }
       );
-      alert(response.data.message || "Book added to cart");
+      toast.success(response.data.message || "Book added to cart!");
       // Dispatch cart update event
       window.dispatchEvent(new CustomEvent('cartUpdated'));
     } catch (error) {
       console.error("Add to cart error:", error);
       const errorMessage = error.response?.data?.message || error.message || "Failed to add to cart";
-      alert("Failed to add to cart: " + errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -62,9 +68,11 @@ const ViewBookDetails = () => {
     if (confirmDelete) {
       try {
         await api.delete(`/delete-book/${id}`);
+        toast.success("Book deleted successfully!");
         navigate('/all-books'); // Navigate to books list after deletion
       } catch (error) {
         console.error("Error deleting book:", error);
+        toast.error("Failed to delete book");
       }
     }
   };

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useEffect } from "react";
 import api from "../../util/axios";
 import BookCard from "../BookCard/BookCard";
+import { toast } from "react-toastify";
 
 const Favourites = () => {
   const [favourites, setFavourites] = useState([]);
@@ -30,12 +31,13 @@ const Favourites = () => {
         { bookId }
       );
 
-      alert(response.data.message);
+      toast.success(response.data.message || "Removed from favourites!");
 
       // ✅ remove book from local state (UI updates instantly)
       setFavourites((prev) => prev.filter((item) => item._id !== bookId));
     } catch (error) {
       console.error("Error removing from favourites:", error);
+      toast.error("Failed to remove from favourites");
     }
   };
 

@@ -2,6 +2,7 @@ import {Link} from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { FaShoppingCart } from 'react-icons/fa';
 import api from '../../util/axios';
+import { toast } from 'react-toastify';
 
 const BookCard = ({ data, favourites, onRemove, showAddToCart = false, showRemoveFromCart = false, onRemoveFromCart }) => {
   const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
@@ -11,12 +12,12 @@ const BookCard = ({ data, favourites, onRemove, showAddToCart = false, showRemov
     e.stopPropagation();
     
     if (!isLoggedIn) {
-      alert('Please login to add items to cart');
+      toast.warning('Please login to add items to cart');
       return;
     }
 
     if (!data._id) {
-      alert('Invalid book data');
+      toast.error('Invalid book data');
       return;
     }
 
@@ -25,13 +26,13 @@ const BookCard = ({ data, favourites, onRemove, showAddToCart = false, showRemov
         `/cart`,
         { bookId: data._id }
       );
-      alert(response.data.message || "Book added to cart");
+      toast.success(response.data.message || "Book added to cart!");
       // Dispatch cart update event
       window.dispatchEvent(new CustomEvent('cartUpdated'));
     } catch (error) {
       console.error("Add to cart error:", error);
       const errorMessage = error.response?.data?.message || error.message || "Failed to add to cart";
-      alert("Failed to add to cart: " + errorMessage);
+      toast.error(errorMessage);
     }
   };
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../../util/axios";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Loader from "../Loader/Loader";
+import { toast } from "react-toastify";
 
 const AdminAllOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -16,7 +17,7 @@ const AdminAllOrders = () => {
       setOrders(res.data.data || []);
     } catch (e) {
       console.error(e);
-      alert("Failed to load orders");
+      toast.error("Failed to load orders");
     } finally {
       setLoading(false);
     }
@@ -32,10 +33,11 @@ const AdminAllOrders = () => {
         `/update-status/${orderId}`,
         { status }
       );
+      toast.success(`Order status updated to "${status}"`);
       fetchOrders();
     } catch (e) {
       console.error(e);
-      alert("Failed to update status");
+      toast.error("Failed to update status");
     }
   };
 

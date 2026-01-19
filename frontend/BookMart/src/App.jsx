@@ -5,9 +5,9 @@ import Footer from './components/Footer/Footer'
 import { Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
+import AuthChoice from './pages/AuthChoice'
 import AllBooks from './pages/AllBooks'
 import Cart from './pages/Cart'
-import Payment from './pages/Payment'
 import Profile from './pages/Profile'
 import ViewBookDetails from './components/ViewBookDetails/ViewBookDetails';
 import { useDispatch, useSelector } from 'react-redux'
@@ -20,7 +20,11 @@ import UserOrderHistory from './components/Profile/UserOrderHistory'
 import Setting from './components/Profile/Setting'
 import AdminAllOrders from './components/Profile/AdminAllOrders'
 import AdminAddBook from './components/Profile/AdminAddBook'
+import AdminDashboard from './components/Profile/AdminDashboard'
+import UserDashboard from './components/Profile/UserDashboard'
 import EditBook from './pages/EditBook'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 const App = () => {
   const dispatch = useDispatch();
@@ -67,13 +71,15 @@ const App = () => {
       <main className="flex-1">
         <Routes>
           <Route exact path="/" element={<Home />} />
+          <Route path="/auth" element={<AuthChoice />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/all-books" element={<AllBooks />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/payment" element={<Payment />} />
           <Route path="/profile" element={<Profile />}>
-            <Route index element={<Favourites />} />
+            <Route index element={role === 'admin' ? <AdminDashboard /> : <UserDashboard />} />
+            <Route path="/profile/dashboard" element={role === 'admin' ? <AdminDashboard /> : <UserDashboard />} />
+            <Route path="/profile/favourites" element={<Favourites />} />
             <Route path="/profile/orderHistory" element={<UserOrderHistory />} />
             <Route path="/profile/settings" element={<Setting />} />
             <Route path="/profile/admin/orders" element={<AdminAllOrders />} />
@@ -87,6 +93,18 @@ const App = () => {
         </Routes>
       </main>
       <Footer />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
   );
 };

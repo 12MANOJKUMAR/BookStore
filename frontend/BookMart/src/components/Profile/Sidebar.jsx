@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Heart, Clock, Settings, LogOut, Camera, Upload } from "lucide-react";
+import { Heart, Clock, Settings, LogOut, Camera, Upload, LayoutDashboard, Package, BookPlus } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { authActions } from "../../store/auth";
 import api from "../../util/axios";
@@ -15,9 +15,16 @@ const Sidebar = () => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  let menuItems = [
+  // User menu items
+  const userMenuItems = [
     {
       path: "/profile",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      gradient: "from-blue-600 to-indigo-600",
+    },
+    {
+      path: "/profile/favourites",
       label: "Favourites",
       icon: Heart,
       gradient: "from-pink-600 to-rose-600",
@@ -26,7 +33,7 @@ const Sidebar = () => {
       path: "/profile/orderHistory",
       label: "Order History",
       icon: Clock,
-      gradient: "from-blue-600 to-indigo-600",
+      gradient: "from-amber-600 to-orange-600",
     },
     {
       path: "/profile/settings",
@@ -36,24 +43,35 @@ const Sidebar = () => {
     },
   ];
 
-  if (role === "admin") {
-    // Remove Favourites and Order History for admin role
-    menuItems = menuItems.filter(
-      (item) => item.label !== "Favourites" && item.label !== "Order History"
-    );
-    menuItems.unshift({
-      path: "/profile/admin/add-book",
-      label: "Add Book",
-      icon: Upload,
-      gradient: "from-emerald-600 to-teal-600",
-    });
-    menuItems.unshift({
+  // Admin menu items
+  const adminMenuItems = [
+    {
+      path: "/profile",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      gradient: "from-blue-600 to-indigo-600",
+    },
+    {
       path: "/profile/admin/orders",
       label: "All Orders",
-      icon: Clock,
+      icon: Package,
       gradient: "from-amber-600 to-orange-600",
-    });
-  }
+    },
+    {
+      path: "/profile/admin/add-book",
+      label: "Add Book",
+      icon: BookPlus,
+      gradient: "from-emerald-600 to-teal-600",
+    },
+    {
+      path: "/profile/settings",
+      label: "Settings",
+      icon: Settings,
+      gradient: "from-purple-600 to-violet-600",
+    },
+  ];
+
+  const menuItems = role === "admin" ? adminMenuItems : userMenuItems;
 
   // ✅ Clean async/await version
   const handleImageUpload = async (event) => {

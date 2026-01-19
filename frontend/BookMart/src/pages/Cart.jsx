@@ -2,10 +2,15 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../util/axios";
+import { toast } from "react-toastify";
+import { CheckCircle, Package, Loader2 } from "lucide-react";
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -57,7 +62,7 @@ const Cart = () => {
       window.dispatchEvent(new CustomEvent("cartUpdated"));
     } catch (error) {
       console.error("Error updating quantity:", error);
-      alert("Failed to update quantity");
+      toast.error("Failed to update quantity");
     }
   };
 
@@ -81,7 +86,7 @@ const Cart = () => {
       window.dispatchEvent(new CustomEvent("cartUpdated"));
     } catch (error) {
       console.error("Error updating quantity:", error);
-      alert("Failed to update quantity");
+      toast.error("Failed to update quantity");
     }
   };
 
@@ -92,12 +97,62 @@ const Cart = () => {
       await api.delete(`/cart/${bookId}`);
       // Update local state
       setCartItems((prev) => prev.filter((item) => item.book._id !== bookId));
-      alert("Item removed from cart");
+      toast.success("Item removed from cart");
       // Dispatch cart update event
       window.dispatchEvent(new CustomEvent("cartUpdated"));
     } catch (error) {
       console.error("Error removing from cart:", error);
-      alert("Failed to remove item");
+      toast.error("Failed to remove item");
+    }
+  };
+
+  // Handle Place Order
+  const handlePlaceOrder = async () => {
+    if (cartItems.length === 0) {
+      toast.error("Your cart is empty!");
+      return;
+    }
+
+    setProcessing(true);
+
+    try {
+      // Create order from cart items
+      const orderItems = cartItems.map(item => ({
+        _id: item.book._id,
+        qty: item.qty || 1,
+        price: item.book.price || 0
+      }));
+
+      // Place order
+      const orderResponse = await api.post(`/order`, {
+        order: orderItems
+      });
+
+      // Clear cart after successful order
+      await api.delete(`/cart/clear`);
+
+      // Dispatch events
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      window.dispatchEvent(new CustomEvent('orderUpdated'));
+
+      // Store order details for success screen
+      setOrderDetails({
+        orderId: orderResponse.data.order._id,
+        totalAmount: totalAmount,
+        itemCount: cartItems.length
+      });
+
+      // Show success state
+      setOrderSuccess(true);
+      setCartItems([]);
+
+      toast.success("Order placed successfully! Confirmation email sent.");
+
+    } catch (error) {
+      console.error("Order error:", error);
+      toast.error(error.response?.data?.message || "Failed to place order. Please try again.");
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -115,6 +170,85 @@ const Cart = () => {
     if (!item || !item.book) return sum;
     return sum + (item.book.price || 0) * (item.qty || 1);
   }, 0);
+
+  // Order Success Screen
+  if (orderSuccess && orderDetails) {
+    return (
+      <div className="min-h-screen bg-zinc-900 flex items-center justify-center p-4">
+        <div className="max-w-lg w-full">
+          <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-3xl p-8 sm:p-10 border border-zinc-700 shadow-2xl text-center">
+            {/* Success Icon */}
+            <div className="mb-6">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-500/30 animate-bounce">
+                <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+              </div>
+            </div>
+
+            {/* Success Message */}
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+              Order Placed Successfully!
+            </h1>
+            <p className="text-zinc-400 mb-6">
+              Thank you for your purchase. Your order is being processed.
+            </p>
+
+            {/* Order Details Card */}
+            <div className="bg-zinc-700/50 rounded-xl p-5 mb-6 text-left">
+              <div className="flex items-center gap-3 mb-4 pb-4 border-b border-zinc-600">
+                <div className="w-10 h-10 bg-yellow-400/10 rounded-lg flex items-center justify-center">
+                  <Package className="w-5 h-5 text-yellow-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-400">Order ID</p>
+                  <p className="text-sm font-mono text-white">#{orderDetails.orderId.slice(-8).toUpperCase()}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-zinc-400 mb-1">Items</p>
+                  <p className="text-lg font-semibold text-white">{orderDetails.itemCount} Book(s)</p>
+                </div>
+                <div>
+                  <p className="text-xs text-zinc-400 mb-1">Total Amount</p>
+                  <p className="text-lg font-bold text-green-400">₹{orderDetails.totalAmount}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Email Notification Info */}
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-6">
+              <p className="text-sm text-blue-300">
+                📧 A confirmation email has been sent to your registered email address.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => navigate("/profile/orderHistory", { 
+                  state: { 
+                    fromOrder: true,
+                    newOrderId: orderDetails.orderId
+                  } 
+                })}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                <Package className="w-5 h-5" />
+                View Orders
+              </button>
+              <Link
+                to="/all-books"
+                className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                📚 Continue Shopping
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="cart-container p-4 md:p-8 bg-zinc-900 min-h-screen">
@@ -293,11 +427,21 @@ const Cart = () => {
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={() => navigate("/payment")}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
+                  onClick={handlePlaceOrder}
+                  disabled={processing}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-600 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base disabled:cursor-not-allowed"
                 >
-                  <span className="text-lg sm:text-xl">💳</span> Proceed to
-                  Checkout
+                  {processing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Placing Order...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      Place Order - ₹{totalAmount}
+                    </>
+                  )}
                 </button>
                 <Link
                   to="/all-books"
@@ -309,7 +453,7 @@ const Cart = () => {
               </div>
 
               <p className="text-center text-gray-500 text-xs sm:text-sm mt-6">
-                🔒 Secure checkout powered by SSL encryption
+                🔒 Secure & instant order placement
               </p>
             </div>
           </>
