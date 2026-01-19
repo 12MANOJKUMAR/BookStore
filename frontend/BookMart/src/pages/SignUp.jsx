@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import api from "../util/axios";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import { 
   Eye, 
   EyeOff, 
@@ -12,10 +13,14 @@ import {
   XCircle,
   Loader2,
   BookOpen,
-  AlertCircle
+  AlertCircle,
+  ShoppingBag,
+  ArrowLeft
 } from "lucide-react";
 
 const SignUp = () => {
+  const [searchParams] = useSearchParams();
+  const selectedRole = searchParams.get('role') || 'user';
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -28,7 +33,6 @@ const SignUp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-  const [message, setMessage] = useState({ type: "", text: "" });
 
   // Password strength calculation
   const passwordStrength = useMemo(() => {
@@ -93,9 +97,6 @@ const SignUp = () => {
       const error = validateField(name, value);
       setErrors(prev => ({ ...prev, [name]: error }));
     }
-    
-    // Clear message on input change
-    if (message.text) setMessage({ type: "", text: "" });
   };
 
   const handleBlur = (e) => {
@@ -119,23 +120,19 @@ const SignUp = () => {
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setTouched({ username: true, email: true, password: true, address: true });
-      setMessage({ type: "error", text: "Please fix the errors below" });
+      toast.error("Please fix the errors below");
       return;
     }
 
     setIsLoading(true);
-    setMessage({ type: "", text: "" });
 
     try {
       await api.post(`/signup`, formData);
-      setMessage({ type: "success", text: "Account created successfully! Redirecting..." });
+      toast.success("Account created successfully! Redirecting...");
       setTimeout(() => navigate("/login"), 1500);
     } catch (error) {
       console.error("Signup error:", error.response?.data || error.message);
-      setMessage({ 
-        type: "error", 
-        text: error.response?.data?.message || "Signup failed. Please try again." 
-      });
+      toast.error(error.response?.data?.message || "Signup failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -180,10 +177,19 @@ const SignUp = () => {
       </div>
 
       <div className="relative w-full max-w-md">
+        {/* Back Button */}
+        <Link 
+          to="/auth" 
+          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-6 transition-colors group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm">Back to options</span>
+        </Link>
+
         {/* Card */}
         <div className="bg-zinc-800/80 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-zinc-700/50">
           {/* Logo/Brand */}
-          <div className="flex flex-col items-center mb-8">
+          <div className="flex flex-col items-center mb-6">
             <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-yellow-400/20">
               <BookOpen className="w-8 h-8 text-zinc-900" />
             </div>
@@ -191,17 +197,13 @@ const SignUp = () => {
             <p className="text-zinc-400 text-sm mt-1">Join BookMart today</p>
           </div>
 
-          {/* Message Alert */}
-          {message.text && (
-            <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
-              message.type === 'error' 
-                ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
-                : 'bg-green-500/10 border border-green-500/20 text-green-400'
-            }`}>
-              {message.type === 'error' ? <XCircle className="w-5 h-5 flex-shrink-0" /> : <CheckCircle className="w-5 h-5 flex-shrink-0" />}
-              <p className="text-sm">{message.text}</p>
+          {/* Role Badge */}
+          <div className="flex justify-center mb-6">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-400/10 border border-yellow-400/30">
+              <ShoppingBag className="w-5 h-5 text-yellow-400" />
+              <span className="text-sm font-medium text-yellow-400">User Account</span>
             </div>
-          )}
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Username Field */}
@@ -390,12 +392,25 @@ const SignUp = () => {
           <p className="text-zinc-400 text-sm text-center">
             Already have an account?{" "}
             <Link 
-              to="/login" 
+              to="/login?role=user" 
               className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors hover:underline underline-offset-4"
             >
               Sign in
             </Link>
           </p>
+        </div>
+
+        {/* Info Card */}
+        <div className="mt-6 bg-zinc-800/50 backdrop-blur-sm rounded-xl p-4 border border-zinc-700/30">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-yellow-400/10 flex items-center justify-center">
+              <ShoppingBag className="w-5 h-5 text-yellow-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-zinc-300">User Account Benefits</p>
+              <p className="text-xs text-zinc-500">Browse books, add to cart, track orders</p>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}

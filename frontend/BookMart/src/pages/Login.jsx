@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { authActions } from "../store/auth";
 import api from "../util/axios";
+import { toast } from "react-toastify";
 import { 
   Eye, 
   EyeOff, 
@@ -10,25 +11,27 @@ import {
   Lock, 
   Loader2, 
   BookOpen,
-  XCircle,
   CheckCircle,
   Shield,
-  ShoppingBag
+  ShoppingBag,
+  ArrowLeft
 } from "lucide-react";
 
 const Login = () => {
+  const [searchParams] = useSearchParams();
+  const selectedRole = searchParams.get('role') || 'user';
   const [formData, setFormData] = useState({ username: "", password: "" });
-  const [message, setMessage] = useState({ type: "", text: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [touched, setTouched] = useState({});
   const [loginSuccess, setLoginSuccess] = useState(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  
+  const isAdmin = selectedRole === 'admin';
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (message.text) setMessage({ type: "", text: "" });
   };
 
   const handleBlur = (e) => {
@@ -39,13 +42,12 @@ const Login = () => {
     e.preventDefault();
     
     if (!formData.username || !formData.password) {
-      setMessage({ type: "error", text: "Please fill in all fields" });
+      toast.error("Please fill in all fields");
       setTouched({ username: true, password: true });
       return;
     }
 
     setIsLoading(true);
-    setMessage({ type: "", text: "" });
 
     try {
       const response = await api.post("/sign-in", formData);
@@ -61,18 +63,12 @@ const Login = () => {
         username: userResponse.data.username
       });
       
-      setMessage({ 
-        type: "success", 
-        text: `Welcome back! Redirecting to ${response.data.role === 'admin' ? 'Admin Panel' : 'your Profile'}...` 
-      });
+      toast.success(`Welcome back, ${userResponse.data.username}! Redirecting to ${response.data.role === 'admin' ? 'Admin Panel' : 'your Profile'}...`);
 
       setTimeout(() => navigate("/profile"), 1500);
     } catch (error) {
       console.error(error);
-      setMessage({
-        type: "error",
-        text: error.response?.data?.message || "Invalid credentials. Please try again."
-      });
+      toast.error(error.response?.data?.message || "Invalid credentials. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -91,31 +87,42 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800 px-4 py-8">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-yellow-400/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-400/5 rounded-full blur-3xl" />
+        <div className={`absolute -top-40 -right-40 w-80 h-80 ${isAdmin ? 'bg-blue-400/5' : 'bg-yellow-400/5'} rounded-full blur-3xl`} />
+        <div className={`absolute -bottom-40 -left-40 w-80 h-80 ${isAdmin ? 'bg-purple-400/5' : 'bg-yellow-400/5'} rounded-full blur-3xl`} />
       </div>
 
       <div className="relative w-full max-w-md">
+        {/* Back Button */}
+        <Link 
+          to="/auth" 
+          className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-6 transition-colors group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm">Back to options</span>
+        </Link>
+
         {/* Card */}
-        <div className="bg-zinc-800/80 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-zinc-700/50">
+        <div className={`bg-zinc-800/80 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border ${isAdmin ? 'border-blue-500/20' : 'border-zinc-700/50'}`}>
           {/* Logo/Brand */}
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-yellow-400/20">
-              <BookOpen className="w-8 h-8 text-zinc-900" />
+            <div className={`w-16 h-16 ${isAdmin ? 'bg-gradient-to-br from-blue-400 to-purple-500' : 'bg-gradient-to-br from-yellow-400 to-yellow-500'} rounded-2xl flex items-center justify-center mb-4 shadow-lg ${isAdmin ? 'shadow-blue-400/20' : 'shadow-yellow-400/20'}`}>
+              {isAdmin ? <Shield className="w-8 h-8 text-white" /> : <BookOpen className="w-8 h-8 text-zinc-900" />}
             </div>
-            <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-            <p className="text-zinc-400 text-sm mt-1">Sign in to your account</p>
+            <h2 className="text-2xl font-bold text-white">
+              {isAdmin ? 'Admin Login' : 'Welcome Back'}
+            </h2>
+            <p className="text-zinc-400 text-sm mt-1">
+              {isAdmin ? 'Sign in to admin panel' : 'Sign in to your account'}
+            </p>
           </div>
 
-          {/* Role Badges */}
-          <div className="flex justify-center gap-3 mb-6">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-700/50 border border-zinc-600/50">
-              <ShoppingBag className="w-4 h-4 text-yellow-400" />
-              <span className="text-xs text-zinc-300">User</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-700/50 border border-zinc-600/50">
-              <Shield className="w-4 h-4 text-blue-400" />
-              <span className="text-xs text-zinc-300">Admin</span>
+          {/* Role Badge */}
+          <div className="flex justify-center mb-6">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${isAdmin ? 'bg-blue-500/10 border border-blue-500/30' : 'bg-yellow-400/10 border border-yellow-400/30'}`}>
+              {isAdmin ? <Shield className="w-5 h-5 text-blue-400" /> : <ShoppingBag className="w-5 h-5 text-yellow-400" />}
+              <span className={`text-sm font-medium ${isAdmin ? 'text-blue-400' : 'text-yellow-400'}`}>
+                {isAdmin ? 'Admin Panel' : 'User Panel'}
+              </span>
             </div>
           </div>
 
@@ -149,28 +156,13 @@ const Login = () => {
             </div>
           )}
 
-          {/* Message Alert */}
-          {message.text && !loginSuccess && (
-            <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
-              message.type === 'error' 
-                ? 'bg-red-500/10 border border-red-500/20 text-red-400' 
-                : 'bg-green-500/10 border border-green-500/20 text-green-400'
-            }`}>
-              {message.type === 'error' 
-                ? <XCircle className="w-5 h-5 flex-shrink-0" /> 
-                : <CheckCircle className="w-5 h-5 flex-shrink-0" />
-              }
-              <p className="text-sm">{message.text}</p>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Username Field */}
             <div className="relative group">
               <User className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-200 ${
                 touched.username && !formData.username 
                   ? 'text-red-400' 
-                  : 'text-zinc-400 group-focus-within:text-yellow-400'
+                  : `text-zinc-400 group-focus-within:${isAdmin ? 'text-blue-400' : 'text-yellow-400'}`
               }`} />
               <input
                 type="text"
@@ -192,7 +184,7 @@ const Login = () => {
               <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-200 ${
                 touched.password && !formData.password 
                   ? 'text-red-400' 
-                  : 'text-zinc-400 group-focus-within:text-yellow-400'
+                  : `text-zinc-400 group-focus-within:${isAdmin ? 'text-blue-400' : 'text-yellow-400'}`
               }`} />
               <input
                 type={showPassword ? "text" : "password"}
@@ -235,7 +227,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-zinc-900 font-semibold py-3.5 rounded-xl hover:from-yellow-300 hover:to-yellow-400 transition-all duration-200 shadow-lg shadow-yellow-400/20 hover:shadow-yellow-400/30 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className={`w-full ${isAdmin ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-400 hover:to-purple-400 shadow-blue-400/20 hover:shadow-blue-400/30 text-white' : 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 shadow-yellow-400/20 hover:shadow-yellow-400/30 text-zinc-900'} font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
             >
               {isLoading ? (
                 <>
@@ -243,7 +235,10 @@ const Login = () => {
                   Signing in...
                 </>
               ) : (
-                "Sign In"
+                <>
+                  {isAdmin ? <Shield className="w-5 h-5" /> : <ShoppingBag className="w-5 h-5" />}
+                  Sign In as {isAdmin ? 'Admin' : 'User'}
+                </>
               )}
             </button>
           </form>
@@ -255,32 +250,53 @@ const Login = () => {
             <div className="flex-1 h-px bg-zinc-700" />
           </div>
 
-          <p className="text-zinc-400 text-sm text-center">
-            Don't have an account?{" "}
-            <Link 
-              to="/signup" 
-              className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors hover:underline underline-offset-4"
-            >
-              Create account
-            </Link>
-          </p>
+          {isAdmin ? (
+            <p className="text-zinc-400 text-sm text-center">
+              Not an admin?{" "}
+              <Link 
+                to="/login?role=user" 
+                className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors hover:underline underline-offset-4"
+              >
+                Sign in as User
+              </Link>
+            </p>
+          ) : (
+            <p className="text-zinc-400 text-sm text-center">
+              Don't have an account?{" "}
+              <Link 
+                to="/signup?role=user" 
+                className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors hover:underline underline-offset-4"
+              >
+                Create account
+              </Link>
+            </p>
+          )}
         </div>
 
-        {/* Info Cards */}
-        <div className="grid grid-cols-2 gap-3 mt-6">
-          <div className="bg-zinc-800/50 backdrop-blur-sm rounded-xl p-4 border border-zinc-700/30">
-            <div className="flex items-center gap-2 mb-2">
-              <ShoppingBag className="w-4 h-4 text-yellow-400" />
-              <span className="text-xs font-medium text-zinc-300">User Panel</span>
-            </div>
-            <p className="text-[10px] text-zinc-500">Browse books, manage cart & orders</p>
-          </div>
-          <div className="bg-zinc-800/50 backdrop-blur-sm rounded-xl p-4 border border-zinc-700/30">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-4 h-4 text-blue-400" />
-              <span className="text-xs font-medium text-zinc-300">Admin Panel</span>
-            </div>
-            <p className="text-[10px] text-zinc-500">Manage books, orders & users</p>
+        {/* Info Card */}
+        <div className={`mt-6 bg-zinc-800/50 backdrop-blur-sm rounded-xl p-4 border ${isAdmin ? 'border-blue-500/20' : 'border-zinc-700/30'}`}>
+          <div className="flex items-center gap-3">
+            {isAdmin ? (
+              <>
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-zinc-300">Admin Panel Access</p>
+                  <p className="text-xs text-zinc-500">Manage books, view orders, control inventory</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-10 h-10 rounded-lg bg-yellow-400/10 flex items-center justify-center">
+                  <ShoppingBag className="w-5 h-5 text-yellow-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-zinc-300">User Panel Access</p>
+                  <p className="text-xs text-zinc-500">Browse books, manage cart & orders</p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
