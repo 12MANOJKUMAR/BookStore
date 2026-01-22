@@ -220,11 +220,24 @@ router.delete("/delete-account", AuthenticateToken, async (req, res) => {
 });
 
 router.post("/logout", (req, res) => {
+  // Use same cookie options as login to ensure proper clearing
+  const cookieOptions = getCookieOptions();
+  
+  // Clear the cookie with same options used during login
   res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: false,
-    sameSite: "Lax",
+    httpOnly: cookieOptions.httpOnly,
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+    path: cookieOptions.path || "/",
   });
+  
+  console.log("🍪 Cookie cleared with options:", {
+    httpOnly: cookieOptions.httpOnly,
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+    path: cookieOptions.path || "/",
+  });
+  
   return res.status(200).json({ message: "Logged out successfully" });
 });
 

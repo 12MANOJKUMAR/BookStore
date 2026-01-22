@@ -4,6 +4,7 @@ import { Heart, Clock, Settings, LogOut, Camera, Upload, LayoutDashboard, Packag
 import { useSelector, useDispatch } from "react-redux";
 import { authActions } from "../../store/auth";
 import api from "../../util/axios";
+import { clearAuthStorage } from "../../util/storage";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -124,21 +125,23 @@ const Sidebar = () => {
       setIsLoggingOut(true);
       dispatch(authActions.setLoggingOut(true));
 
-      await api.post("/logout"); // server clears HTTP-only cookie
+      // Call logout API to clear server-side cookie
+      await api.post("/logout");
 
-      // update redux state
-      dispatch(authActions.logout()); // sets lastLogoutTime = Date.now()
+      // Clear all storage (localStorage + sessionStorage)
+      clearAuthStorage();
 
-      // Clear any local storage items
-      localStorage.removeItem('userId');
-      localStorage.removeItem('token');
+      // Clear Redux state completely
+      dispatch(authActions.logout());
 
-      navigate("/"); // go to home or login page
+      // Navigate to home page
+      navigate("/");
     } catch (err) {
       console.error("Logout error:", err);
+      
+      // Even if API call fails, clear everything locally
+      clearAuthStorage();
       dispatch(authActions.logout());
-      localStorage.removeItem('userId');
-      localStorage.removeItem('token');
       navigate("/");
     } finally {
       setIsLoggingOut(false);

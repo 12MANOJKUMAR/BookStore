@@ -1,4 +1,7 @@
 import axios from "axios";
+import store from "../store";
+import { authActions } from "../store/auth";
+import { clearAuthStorage } from "./storage";
 
 // Determine base URL: use env variable, or fallback based on environment
 const getBaseURL = () => {
@@ -37,5 +40,45 @@ const api = axios.create({
   baseURL,
   withCredentials: true, // send HttpOnly cookie automatically
 });
+
+// ✅ Response interceptor to handle authentication errors globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const { response } = error;
+    
+    // Handle 401 (Unauthorized) and 403 (Forbidden) - token issues
+    if (response?.status === 401 || response?.status === 403) {
+      const errorCode = response?.data?.code;
+      const url = error.config?.url || '';
+      
+      // Don't logout for login/signup endpoints (expected failures during authentication)
+      const isLoginOrSignup = url.includes('/sign-in') || url.includes('/signup');
+      
+      // For all other endpoints (including /get-user-information), logout on auth errors
+      // Also logout if it's a token expiration/invalid token error
+      if (!isLoginOrSignup) {
+        const shouldLogout = 
+          errorCode === 'TOKEN_EXPIRED' || 
+          errorCode === 'INVALID_TOKEN' || 
+          errorCode === 'NO_TOKEN' ||
+          errorCode === 'TOKEN_ERROR' ||
+          (!errorCode && (response?.status === 401 || response?.status === 403));
+        
+        if (shouldLogout) {
+          console.log("🔒 Authentication error detected, clearing auth state:", errorCode || response?.status);
+          
+          // Clear all storage (localStorage + sessionStorage)
+          clearAuthStorage();
+          
+          // Clear Redux auth state
+          store.dispatch(authActions.logout());
+        }
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 export default api;

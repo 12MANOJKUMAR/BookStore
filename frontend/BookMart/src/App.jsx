@@ -31,30 +31,68 @@ const App = () => {
   const role = useSelector((state) => state.auth.role);
   const isLoggingOut = useSelector((state) => state.auth.isLoggingOut);
   const lastLogoutTime = useSelector((state) => state.auth.lastLogoutTime);
-  const [authChecked, setAuthChecked] = useState(false);
+  const authChecked = useSelector((state) => state.auth.authChecked);
 
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId = null;
+
     const checkAuth = async () => {
-      // skip if user just logged out
-      const recentLogout = lastLogoutTime && (Date.now() - lastLogoutTime) < 3000;
-      if (isLoggingOut || recentLogout) {
-        setAuthChecked(true);
+      // Skip if already checked
+      if (authChecked) {
+        return;
+      }
+
+      // Skip if currently logging out
+      if (isLoggingOut) {
+        if (isMounted) {
+          dispatch(authActions.setAuthChecked(true));
+        }
+        return;
+      }
+
+      // Skip if user just logged out (within 5 seconds to prevent auto-login)
+      const recentLogout = lastLogoutTime && (Date.now() - lastLogoutTime) < 5000;
+      if (recentLogout) {
+        console.log("⏸️ Skipping auth check - recent logout detected");
+        if (isMounted) {
+          dispatch(authActions.setAuthChecked(true));
+        }
         return;
       }
 
       try {
         const res = await api.get("/get-user-information"); // sends HTTP-only cookie
-        dispatch(authActions.login());
-        dispatch(authActions.setUser(res.data));
-        dispatch(authActions.changeRole(res.data.role));
+        
+        if (isMounted) {
+          // Set user data and login state properly
+          dispatch(authActions.setUser(res.data));
+          dispatch(authActions.changeRole(res.data.role));
+          dispatch(authActions.login({ user: res.data, role: res.data.role }));
+          dispatch(authActions.setAuthChecked(true));
+        }
       } catch (err) {
-        dispatch(authActions.logout());
-      } finally {
-        setAuthChecked(true);
+        // Error is already handled by axios interceptor
+        // Just mark as checked - user is not authenticated
+        if (isMounted) {
+          dispatch(authActions.setAuthChecked(true));
+        }
       }
     };
-    checkAuth();
-  }, [dispatch, isLoggingOut, lastLogoutTime]);
+
+    // Only run auth check once if not already checked
+    // Add small delay to ensure logout state is properly set
+    if (!authChecked) {
+      timeoutId = setTimeout(() => {
+        checkAuth();
+      }, 100);
+    }
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [dispatch, isLoggingOut, lastLogoutTime, authChecked]);
 
   if (!authChecked) {
     return (

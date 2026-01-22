@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import { authActions } from "../store/auth";
 import api from "../util/axios";
 import { toast } from "react-toastify";
+import { clearAuthStorage } from "../util/storage";
 import { 
   Eye, 
   EyeOff, 
@@ -50,12 +51,16 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      // Clear any old storage before login
+      clearAuthStorage();
+      
       const response = await api.post("/sign-in", formData);
       const userResponse = await api.get("/get-user-information");
 
+      // Set user data and login state properly
       dispatch(authActions.setUser(userResponse.data));
-      dispatch(authActions.login());
       dispatch(authActions.changeRole(response.data.role));
+      dispatch(authActions.login({ user: userResponse.data, role: response.data.role }));
 
       // Show success message with role info
       setLoginSuccess({

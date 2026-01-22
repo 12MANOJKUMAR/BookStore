@@ -16,19 +16,24 @@ const authSlice = createSlice({
       state.isLoggedIn = true;
       state.isLoggingOut = false;
       state.lastLogoutTime = null;
-      state.user = action.payload?.user || null;
-      state.role = action.payload?.role || "user";
+      // Preserve existing user data if payload doesn't have user
+      if (action.payload?.user) {
+        state.user = action.payload.user;
+      }
+      if (action.payload?.role) {
+        state.role = action.payload.role;
+      }
       state.authChecked = true; // ✅ mark auth check done
     },
 
-    // Logout user safely
+    // Logout user safely - completely reset all state
     logout(state) {
       state.isLoggedIn = false;
       state.user = null;
       state.role = "user";
       state.isLoggingOut = false;
       state.lastLogoutTime = Date.now();
-      state.authChecked = true; // ✅ mark auth check done
+      state.authChecked = false; // Reset to false so auth check can run again if needed
     },
 
     // Temporarily set logging out flag (to block API calls)
