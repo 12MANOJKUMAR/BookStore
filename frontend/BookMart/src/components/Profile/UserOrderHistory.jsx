@@ -1,8 +1,8 @@
-
 // src/components/Profile/UserOrderHistory.jsx
 import React, { useEffect, useState } from "react";
 import api from "../../util/axios";
 import { useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const UserOrderHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -15,11 +15,14 @@ const UserOrderHistory = () => {
   useEffect(() => {
     fetchOrders();
     
-    // Check if redirected from payment
-    if (location.state?.fromPayment) {
+    // Check if redirected from payment or order placement
+    if (location.state?.fromPayment || location.state?.fromOrder) {
       setShowSuccessMessage(true);
       // Clear the state after showing message
       setTimeout(() => setShowSuccessMessage(false), 5000);
+      
+      // Clear the navigation state to prevent showing on refresh
+      window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
@@ -44,11 +47,29 @@ const UserOrderHistory = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
+      setError(null); // Clear previous errors
       const response = await api.get(`/orders`);
-      setOrders(response.data.orders || []);
+      
+      // Ensure we have valid data
+      const ordersData = response.data?.orders || [];
+      
+      // Filter out any invalid orders
+      const validOrders = ordersData.filter(order => order && order._id);
+      
+      setOrders(validOrders);
     } catch (error) {
       console.error("Error fetching orders:", error);
-      setError("Failed to load order history");
+      
+      // Better error messages based on error type
+      if (error.response?.status === 401) {
+        setError("Please login to view your order history");
+      } else if (error.response?.status === 500) {
+        setError("Server error. Please try again later.");
+      } else if (!navigator.onLine) {
+        setError("No internet connection. Please check your network.");
+      } else {
+        setError(error.response?.data?.message || "Failed to load order history");
+      }
     } finally {
       setLoading(false);
     }
@@ -64,10 +85,10 @@ const UserOrderHistory = () => {
       await api.delete(`/clear-history`);
       
       setOrders([]);
-      alert("Order history cleared successfully!");
+      toast.success("Order history cleared successfully!");
     } catch (error) {
       console.error("Error clearing order history:", error);
-      alert("Failed to clear order history");
+      toast.error("Failed to clear order history");
     } finally {
       setClearing(false);
     }
@@ -206,15 +227,17 @@ const UserOrderHistory = () => {
     <div className="space-y-6">
       {/* Success Message */}
       {showSuccessMessage && (
-        <div className="bg-green-900/50 border border-green-500 text-green-300 px-6 py-4 rounded-lg flex items-center gap-3">
-          <span className="text-2xl">✅</span>
-          <div>
-            <h3 className="font-semibold">Payment Successful!</h3>
-            <p className="text-sm">Your order has been placed and added to your order history.</p>
+        <div className="bg-green-900/50 border border-green-500 text-green-300 px-6 py-4 rounded-xl flex items-center gap-4 animate-pulse">
+          <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+            <span className="text-2xl">✅</span>
+          </div>
+          <div className="flex-1">
+            <h3 className="font-bold text-lg">Order Placed Successfully!</h3>
+            <p className="text-sm text-green-400">Your order has been placed and added to your order history. A confirmation email has been sent.</p>
           </div>
           <button 
             onClick={() => setShowSuccessMessage(false)}
-            className="ml-auto text-green-300 hover:text-white text-xl"
+            className="ml-auto text-green-300 hover:text-white text-2xl hover:bg-green-500/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
           >
             ×
           </button>
@@ -315,34 +338,47 @@ const UserOrderHistory = () => {
               {order.books && order.books.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {order.books.map((orderItem, index) => {
-                    const book = orderItem.book || orderItem; // Handle both old and new structure
+                    const book = orderItem?.book || orderItem; // Handle both old and new structure
+                    
+                    // Skip if book data is not available
+                    if (!book || !book.title) {
+                      return (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-zinc-700/50 rounded-lg">
+                          <div className="w-12 h-16 bg-zinc-600 flex items-center justify-center text-gray-400 rounded text-xs">
+                            📚
+                          </div>
+                          <div className="flex-grow min-w-0">
+                            <h5 className="font-semibold text-gray-400 text-sm">Book details unavailable</h5>
+                            <p className="text-blue-400 text-xs mt-1">Qty: {orderItem?.qty || 1}</p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    
                     return (
                       <div key={index} className="flex items-center gap-3 p-3 bg-zinc-700/50 rounded-lg">
                         {book.url ? (
                           <img 
                             src={book.url} 
-                            alt={book.title} 
+                            alt={book.title || "Book"} 
                             className="w-12 h-16 object-cover rounded"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '';
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
                           />
-                        ) : (
-                          <div className="w-12 h-16 bg-zinc-600 flex items-center justify-center text-gray-400 rounded text-xs">
-                            No Image
-                          </div>
-                        )}
+                        ) : null}
+                        <div className={`w-12 h-16 bg-zinc-600 items-center justify-center text-gray-400 rounded text-xs ${book.url ? 'hidden' : 'flex'}`}>
+                          📚
+                        </div>
                         <div className="flex-grow min-w-0">
-                          <h5 className="font-semibold text-white text-sm truncate">{book.title}</h5>
-                          <p className="text-gray-400 text-xs">by {book.author}</p>
+                          <h5 className="font-semibold text-white text-sm truncate">{book.title || "Unknown Book"}</h5>
+                          <p className="text-gray-400 text-xs">by {book.author || "Unknown Author"}</p>
                           <div className="flex items-center justify-between mt-1">
-                            <p className="text-green-400 font-semibold text-sm">₹{book.price}</p>
-                            <p className="text-blue-400 text-xs">Qty: {orderItem.qty || 1}</p>
-                          </div>
-                          <div className="mt-1 flex items-center justify-between">
-                            <p className="text-gray-500 text-xs">
-                              <span className="font-medium">Added:</span> {formatTimeAgo(order.createdAt)}
-                            </p>
-                            <p className="text-gray-500 text-xs" title={formatFullDate(order.createdAt)}>
-                              {formatDate(order.createdAt)}
-                            </p>
+                            <p className="text-green-400 font-semibold text-sm">₹{book.price || 0}</p>
+                            <p className="text-blue-400 text-xs">Qty: {orderItem?.qty || 1}</p>
                           </div>
                         </div>
                       </div>

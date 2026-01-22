@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../util/axios";
 import { useDispatch } from "react-redux";
 import { authActions } from "../../store/auth";
+import { toast } from "react-toastify";
 
 const Setting = () => {
   const [user, setUser] = useState(null);
@@ -154,11 +155,13 @@ const Setting = () => {
 
     try {
       await api.delete(`/delete-account`);
-      alert("Account deleted successfully. Redirecting to home...");
-      window.location.href = "/";
+      toast.success("Account deleted successfully. Redirecting to home...");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
     } catch (error) {
       console.error("Error deleting account:", error);
-      setError("Failed to delete account");
+      toast.error("Failed to delete account");
     }
   };
 

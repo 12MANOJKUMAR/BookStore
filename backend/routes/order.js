@@ -3,6 +3,7 @@ const { AuthenticateToken } = require("./userAuth");
 const User = require("../models/user");
 const Book = require("../models/book");
 const Order = require("../models/order");
+const { sendOrderNotificationEmail, sendOrderConfirmationEmail } = require("../utils/emailService");
 
 // place order ...
 router.post("/order", AuthenticateToken, async (req, res) => {
@@ -41,6 +42,28 @@ router.post("/order", AuthenticateToken, async (req, res) => {
     // Clear cart (if stored inside user doc)
     await User.findByIdAndUpdate(id, { $set: { cart: [] } });
 
+    // Fetch complete order details for email (with populated data)
+    const populatedOrder = await Order.findById(savedOrder._id)
+      .populate("books.book")
+      .populate("user");
+
+    // Send email notifications (non-blocking)
+    const orderEmailDetails = {
+      user: populatedOrder.user,
+      books: populatedOrder.books,
+      totalAmount: populatedOrder.totalAmount,
+      orderId: savedOrder._id.toString(),
+      orderDate: savedOrder.createdAt || new Date(),
+    };
+
+    // Send emails asynchronously (don't await - let it run in background)
+    sendOrderNotificationEmail(orderEmailDetails).catch(err => 
+      console.error("Admin email notification failed:", err)
+    );
+    sendOrderConfirmationEmail(orderEmailDetails).catch(err => 
+      console.error("Customer confirmation email failed:", err)
+    );
+
     return res.json({
       status: "success",
       message: "Order placed successfully",
@@ -56,17 +79,28 @@ router.post("/order", AuthenticateToken, async (req, res) => {
 router.get("/orders", AuthenticateToken, async (req, res) => {
   try {
     const id = req.user.id;
+    
+    if (!id) {
+      return res.status(400).json({ message: "User ID not found" });
+    }
+    
     const orders = await Order.find({ user: id })
-      .populate("books.book")
-      .sort({ createdAt: -1 });
+      .populate({
+        path: "books.book",
+        model: "book"
+      })
+      .sort({ createdAt: -1 })
+      .lean(); // Use lean() for better performance
 
     return res.json({
       status: "success",
-      orders: orders,
+      orders: orders || [],
     });
   } catch (error) {
+    console.error("Error fetching orders:", error);
     return res.status(500).json({
       message: "An error occurred while fetching orders",
+      error: error.message
     });
   }
 });

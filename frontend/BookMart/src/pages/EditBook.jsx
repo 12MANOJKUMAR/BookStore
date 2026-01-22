@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import api from "../util/axios";
+import { toast } from "react-toastify";
 
 const EditBook = () => {
   const { id } = useParams();
@@ -38,7 +39,7 @@ const EditBook = () => {
         });
       } catch (error) {
         console.error("Failed to load book:", error);
-        alert("Failed to load book details");
+        toast.error("Failed to load book details");
       } finally {
         setLoading(false);
       }
@@ -56,12 +57,12 @@ const EditBook = () => {
     if (submitting) return;
     // Basic validation
     if (!form.title.trim() || !form.author.trim() || !String(form.price).toString().trim()) {
-      alert("Title, Author and Price are required");
+      toast.error("Title, Author and Price are required");
       return;
     }
     const priceNum = Number(form.price);
     if (Number.isNaN(priceNum) || priceNum < 0) {
-      alert("Price must be a non-negative number");
+      toast.error("Price must be a non-negative number");
       return;
     }
     try {
@@ -78,12 +79,12 @@ const EditBook = () => {
         `/update-book/${id}`,
         payload
       );
-      alert(res.data?.message || "Book updated successfully");
+      toast.success(res.data?.message || "Book updated successfully!");
       navigate(`/book/${id}`);
     } catch (error) {
       console.error("Update failed:", error);
       const msg = error.response?.data?.message || error.message || "Failed to update book";
-      alert(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }

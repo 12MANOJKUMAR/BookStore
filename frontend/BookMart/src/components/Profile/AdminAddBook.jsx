@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../../util/axios";
+import { toast } from "react-toastify";
 
 const AdminAddBook = () => {
   const [form, setForm] = useState({ url: "", title: "", author: "", price: "", desc: "", language: "" });
@@ -12,11 +13,11 @@ const AdminAddBook = () => {
     setSubmitting(true);
     try {
       await api.post(`/add-book`, form);
-      alert("Book added");
+      toast.success("Book added successfully!");
       setForm({ url: "", title: "", author: "", price: "", desc: "", language: "" });
     } catch (e) {
       console.error(e);
-      alert("Failed to add book");
+      toast.error(e.response?.data?.message || "Failed to add book");
     } finally {
       setSubmitting(false);
     }

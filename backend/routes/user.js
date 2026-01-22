@@ -4,6 +4,31 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { AuthenticateToken } = require("./userAuth");
 
+// ✅ Centralized cookie configuration to ensure exact matching
+const getCookieOptions = () => {
+  // Check if we're using HTTPS (production-like) based on environment or URLs
+  const isHTTPS = process.env.NODE_ENV === "production" || 
+                  process.env.FRONTEND_URL?.startsWith("https://") ||
+                  process.env.BACKEND_URL?.startsWith("https://");
+  
+  const options = {
+    httpOnly: true,
+    secure: isHTTPS, // Use secure cookies for HTTPS
+    sameSite: isHTTPS ? "None" : "Lax", // None for cross-site HTTPS, Lax for local
+    path: "/",
+  };
+  
+  // Log environment detection for debugging
+  console.log("🔧 Environment detection:", {
+    NODE_ENV: process.env.NODE_ENV,
+    FRONTEND_URL: process.env.FRONTEND_URL,
+    isHTTPS,
+    cookieOptions: options
+  });
+  
+  return options;
+};
+
 // signup
 router.post("/signup", async (req, res) => {
   try {
@@ -60,11 +85,12 @@ router.post("/sign-in", async (req, res) => {
       expiresIn: process.env.TIME || "7d",
     });
 
+    const cookieOptions = getCookieOptions();
+    console.log("🍪 Setting login cookie with options:", { ...cookieOptions, maxAge: "7 days" });
+    
     res.cookie("accessToken", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     return res.status(200).json({
@@ -179,13 +205,11 @@ router.delete("/delete-account", AuthenticateToken, async (req, res) => {
     // Delete user and all associated data
     await User.findByIdAndDelete(userId);
     
-    // Clear the cookie (match options used when setting the cookie)
+    // Clear the cookie
     res.clearCookie("accessToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-      path: "/",
-      // Do NOT set domain here; let it default to the current host so it matches the cookie that was set
+      secure: false,
+      sameSite: "Lax",
     });
 
     return res.status(200).json({ message: "Account deleted successfully" });
@@ -195,14 +219,11 @@ router.delete("/delete-account", AuthenticateToken, async (req, res) => {
   }
 });
 
-// logout
 router.post("/logout", (req, res) => {
   res.clearCookie("accessToken", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    path: "/",
-    // Do NOT set domain; default to current host so it matches the cookie scope used on login
+    secure: false,
+    sameSite: "Lax",
   });
   return res.status(200).json({ message: "Logged out successfully" });
 });
